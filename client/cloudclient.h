@@ -39,6 +39,11 @@ bool cloud_client_set_log(const char *filename);
 bool cloud_client_load_cfg(const char *filename);
 
 /*
+ * Checking login information
+ */
+bool cloud_client_login(const char *username, const char *passwd);
+
+/*
  * Starting all threads of cloud client
  */
 void cloud_client_start(void);

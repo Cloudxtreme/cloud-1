@@ -10,6 +10,7 @@
  */
 #include "cloudclient.h"
 #include <pthread.h>
+#include <string.h>
 #include "configs.h"
 #include "log.h"
 #include "checkermain.h"
@@ -17,6 +18,8 @@
 
 
 static struct cloud_client {
+	char username[100];
+	char passwd[200];
 	pthread_mutex_t mutex;
 } cloud;
 
@@ -39,6 +42,20 @@ bool cloud_client_load_cfg(const char *filename)
 bool cloud_client_set_log(const char *filename)
 {
 	return log_set_path(filename);
+}
+
+bool cloud_client_login(const char *username, const char *passwd)
+{
+	if (strlen(username) > 99 || strlen(passwd) > 99) {
+		log_local("Login: Username or Passord is to long.", LOG_ERROR);
+		return false;
+	}
+
+	if (!strcmp(username, "") || !strcmp(passwd, ""))
+		return false;
+
+	strncpy(cloud.username, username, 99);
+	return true;
 }
 
 void cloud_client_start(void)
