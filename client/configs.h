@@ -18,10 +18,19 @@ struct main_checker_cfg {
 	unsigned interval;	
 };
 
+struct life_checker_cfg {
+	unsigned interval;	
+};
+
 /*
  * Checker timer configs
  */
 struct main_checker_cfg *configs_get_main_checker();
+
+/*
+ * Server life timer configs
+ */
+struct life_checker_cfg *configs_get_life_checker();
 
 /**
  * Loading configs from file to RAM

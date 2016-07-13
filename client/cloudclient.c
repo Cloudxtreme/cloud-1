@@ -13,6 +13,7 @@
 #include "configs.h"
 #include "log.h"
 #include "checkermain.h"
+#include "checkerlife.h"
 
 
 static struct cloud_client {
@@ -23,6 +24,7 @@ static struct cloud_client {
 void cloud_client_init(void)
 {
 	pthread_mutex_init(&cloud.mutex, NULL);
+	checker_life_init();
 }
 
 bool cloud_client_load_cfg(const char *filename)
@@ -42,6 +44,7 @@ bool cloud_client_set_log(const char *filename)
 void cloud_client_start(void)
 {
 	checker_main_start(&cloud.mutex);
+	checker_life_start(&cloud.mutex);
 }
 
 void cloud_client_free(void)

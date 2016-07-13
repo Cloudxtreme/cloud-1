@@ -19,6 +19,7 @@
 
 static struct {
     struct main_checker_cfg mcc;
+    struct life_checker_cfg lcc;
 } cfg;
 
 
@@ -64,7 +65,7 @@ bool configs_load(const char *filename)
         return false;
 
     /*
-     * Checker timer cfg
+     * Main checker timer cfg
      */
     jdata = json_object_get(root, "MainChecker");
     if (jdata == NULL) {
@@ -72,6 +73,18 @@ bool configs_load(const char *filename)
         return false;
     }
     if (!get_integer_value(root, jdata, "Interval", (int *)&cfg.mcc.interval))
+        return false;
+    json_decref(jdata);
+
+    /*
+     * Life checker timer cfg
+     */
+    jdata = json_object_get(root, "LifeChecker");
+    if (jdata == NULL) {
+        json_decref(root);
+        return false;
+    }
+    if (!get_integer_value(root, jdata, "Interval", (int *)&cfg.lcc.interval))
         return false;
 
     json_decref(jdata);
@@ -82,4 +95,9 @@ bool configs_load(const char *filename)
 struct main_checker_cfg *configs_get_main_checker()
 {
     return &cfg.mcc;
+}
+
+struct life_checker_cfg *configs_get_life_checker()
+{
+    return &cfg.lcc;
 }

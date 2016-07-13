@@ -2,12 +2,13 @@ CC=gcc
 CFLAGS=-Wall -I. -std=gnu99 -pedantic -march=native -O2 -Wno-pointer-arith
 LDFLAGS=-ljansson
 LDFLAGS2=-lpthread
+OUTLIST=main.o tcpclient.o configs.o utils.o log.o checkermain.o cloudclient.o checkerlife.o
 
 
 all: meteo
 
-meteo: main.o tcpclient.o configs.o utils.o log.o checkermain.o cloudclient.o
-	$(CC) main.o tcpclient.o configs.o utils.o log.o checkermain.o cloudclient.o -o cloudclient $(CFLAGS) $(LDFLAGS) $(LDFLAGS2)
+meteo: $(OUTLIST)
+	$(CC) $(OUTLIST) -o cloudclient $(CFLAGS) $(LDFLAGS) $(LDFLAGS2)
 
 main.o: main.c
 	$(CC) -c main.c $(CFLAGS)
@@ -26,6 +27,9 @@ utils.o: utils.c
 
 checkermain.o: checkermain.c
 	$(CC) -c checkermain.c $(CFLAGS)
+
+checkerlife.o: checkerlife.c
+	$(CC) -c checkerlife.c $(CFLAGS)
 
 cloudclient.o: cloudclient.c
 	$(CC) -c cloudclient.c $(CFLAGS)

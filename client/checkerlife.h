@@ -9,28 +9,15 @@
  * of the Licence, or (at your option) any later version.
  */
 
-#include "cloudclient.h"
-#include <stdio.h>
-#include <string.h>
+#ifndef __CHECKER_LIFE_H__
+#define __CHECKER_LIFE_H__
+
+#include <pthread.h>
 
 
-int main(void)
-{
-	cloud_client_init();
-	if (!cloud_client_set_log("/var/log/cloudclient.log")) {
-		puts("Log path is to long!");
-		return -1;
-	}
-	if (!cloud_client_load_cfg("cloudclient.cfg"))
-		return -1;
+void checker_life_init(void);
 
-	puts("Starting cloud client...");
-	cloud_client_start();
+void checker_life_start(pthread_mutex_t *mutex);
 
-	for (;;) {
-		sleep(1);
-	}
 
-	cloud_client_free();
-	return 0;
-}
+#endif
