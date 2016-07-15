@@ -14,21 +14,6 @@
 
 #include <stdbool.h>
 
-enum {
-	LOGIN_OK,
-	LOGIN_FAIL
-};
-
-struct login_data {
-	char username[100];
-	char passwd_hash[129];
-};
-
-struct login_answ {
-	unsigned code;
-};
-
-
 /*
  * Starting cloud server
  */

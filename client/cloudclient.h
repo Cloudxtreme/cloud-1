@@ -54,4 +54,10 @@ void cloud_client_start(void);
 void cloud_client_free(void);
 
 
+/*
+ * Callbacks
+ */
+void cloud_client_set_error_cb(void (*error)(const char*, void*), void *data);
+
+
 #endif

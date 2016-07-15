@@ -15,8 +15,29 @@
 #include "configs.h"
 #include "log.h"
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
+enum {
+	FIRST_LOGIN = 1,
+	REGULAR_LOGIN = 0
+};
+
+enum {
+	LOGIN_OK,
+	LOGIN_FAIL
+};
+
+struct login_data {
+	uint8_t first;
+	unsigned id;
+	char login[100];
+	char passwd_hash[129];	
+};
+
+struct login_answ {
+	unsigned code;
+};
 
 static struct {
 	pthread_mutex_t mutex;
@@ -27,11 +48,31 @@ static struct {
 static void new_session(struct tcp_client *s_client, void *data)
 {
 	struct login_data ldata;
-
+	struct login_answ lansw;
+	
 	if (!tcp_client_recv(s_client, (void *)&ldata, sizeof(ldata))) {
-		pthread_mutex_lock(&cloud.mutex);
-		log_local("Fail receiving login data.", LOG_ERROR);
-		pthread_mutex_unlock(&cloud.mutex);
+		log_local("Bad client connected.", LOG_ERROR);
+		puts("Client disconnected.");
+		return;
+	}
+	printf("Client ID:%d connected.\n%s", ldata.id, "Login...");
+	//Checking login and password
+
+	if (!tcp_client_send(s_client, (const void *)&lansw, sizeof(lansw))) {
+		printf("%s\n", "FAIL.");
+		log_local("Fail sending login answare.", LOG_ERROR);
+		puts("Client disconnected.");
+		return;
+	}
+	printf("%s\n", "OK.");
+
+	if (ldata.first == FIRST_LOGIN) {
+		puts("Client disconnected.");
+		return;
+	}
+	if (ldata.first != REGULAR_LOGIN) {
+		log_local("Bad login data.", LOG_ERROR);
+		puts("Client disconnected.");
 		return;
 	}
 }

@@ -14,13 +14,23 @@
 
 #include <stdbool.h>
 
+struct server_cfg {
+	char ip[16];
+	unsigned port;	
+};
+
 struct main_checker_cfg {
-	unsigned interval;	
+	unsigned interval;
 };
 
 struct life_checker_cfg {
-	unsigned interval;	
+	unsigned interval;
 };
+
+/*
+ * Server configs
+ */
+struct server_cfg *configs_get_server();
 
 /*
  * Checker timer configs

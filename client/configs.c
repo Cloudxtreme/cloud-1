@@ -20,6 +20,7 @@
 static struct {
     struct main_checker_cfg mcc;
     struct life_checker_cfg lcc;
+    struct server_cfg sc;
 } cfg;
 
 
@@ -87,6 +88,19 @@ bool configs_load(const char *filename)
     if (!get_integer_value(root, jdata, "Interval", (int *)&cfg.lcc.interval))
         return false;
 
+    /*
+     * Server cfg
+     */
+    jdata = json_object_get(root, "Server");
+    if (jdata == NULL) {
+        json_decref(root);
+        return false;
+    }
+    if (!get_string_value(root, jdata, "Ip", cfg.sc.ip, 15))
+        return false;
+    if (!get_integer_value(root, jdata, "Port", (int *)&cfg.sc.port))
+        return false;
+
     json_decref(jdata);
     json_decref(root);
     return true;
@@ -100,4 +114,9 @@ struct main_checker_cfg *configs_get_main_checker()
 struct life_checker_cfg *configs_get_life_checker()
 {
     return &cfg.lcc;
+}
+
+struct server_cfg *configs_get_server()
+{
+    return &cfg.sc;
 }
