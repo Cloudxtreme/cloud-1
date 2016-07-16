@@ -51,28 +51,41 @@ static void new_session(struct tcp_client *s_client, void *data)
 	struct login_answ lansw;
 	
 	if (!tcp_client_recv(s_client, (void *)&ldata, sizeof(ldata))) {
+		pthread_mutex_lock(&cloud.mutex);
 		log_local("Bad client connected.", LOG_ERROR);
 		puts("Client disconnected.");
+		pthread_mutex_unlock(&cloud.mutex);
 		return;
 	}
+	pthread_mutex_lock(&cloud.mutex);
 	printf("Client ID:%d connected.\n%s", ldata.id, "Login...");
+	pthread_mutex_unlock(&cloud.mutex);
+	
 	//Checking login and password
 
 	if (!tcp_client_send(s_client, (const void *)&lansw, sizeof(lansw))) {
+		pthread_mutex_lock(&cloud.mutex);
 		printf("%s\n", "FAIL.");
 		log_local("Fail sending login answare.", LOG_ERROR);
 		puts("Client disconnected.");
+		pthread_mutex_unlock(&cloud.mutex);
 		return;
 	}
+	pthread_mutex_lock(&cloud.mutex);
 	printf("%s\n", "OK.");
+	pthread_mutex_unlock(&cloud.mutex);
 
 	if (ldata.first == FIRST_LOGIN) {
+		pthread_mutex_lock(&cloud.mutex);
 		puts("Client disconnected.");
+		pthread_mutex_unlock(&cloud.mutex);
 		return;
 	}
 	if (ldata.first != REGULAR_LOGIN) {
+		pthread_mutex_lock(&cloud.mutex);
 		log_local("Bad login data.", LOG_ERROR);
 		puts("Client disconnected.");
+		pthread_mutex_unlock(&cloud.mutex);
 		return;
 	}
 }
