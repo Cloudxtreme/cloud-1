@@ -53,12 +53,12 @@ bool file_transfer_send_file(struct file_transfer *ftransfer, const char *filena
 /**
  * Receiving file from tcp socket
  * @ftransfer: file transfer structure pointer
- * @localname: receiving local file name
+ * @path: receiving local path
  *
  * returns false: if sending error
  * returns true: if sending ok
  */
-bool file_transfer_send_file(struct file_transfer *ftransfer, const char *localname);
+bool file_transfer_recv_file(struct file_transfer *ftransfer, const char *path);
 
 
 #endif
