@@ -219,6 +219,57 @@ bool file_transfer_send_file(struct file_transfer *ftransfer, const char *filena
         }
     	return true;
     }
+    /*
+     * If size of file >= BLOCK_SIZE
+     * Sending each block of file
+     */
+    for (unsigned long i = 0; i < finfo.blocks; i++) {
+    	if (!send_file_data(ftransfer, file, BLOCK_SIZE, &sha_ctx)) {
+			if (ftransfer->error != NULL) 
+				ftransfer->error("Fail sending file.", ftransfer->err_data);
+			fclose(file);
+			return false;
+		}
+    }
+    /*
+     * Sending last block of file
+     */
+    if (finfo.last_block != 0) {
+    	if (!send_file_data(ftransfer, file, finfo.last_block, &sha_ctx)) {
+			if (ftransfer->error != NULL) 
+				ftransfer->error("Fail sending file.", ftransfer->err_data);
+			fclose(file);
+			return false;
+		}
+    }
+    ret_val = SHA512_Final(fhash.hash, &sha_ctx);
+    if (!ret_val) {
+       	if (ftransfer->error != NULL) 
+			ftransfer->error("Fail finalization of sha512.", ftransfer->err_data);
+		return false;
+    }
+    /*
+     * Sending file hash
+     */
+    if (!tcp_client_send(ftransfer->client, (const void *)&fhash, sizeof(fhash))) {
+       	if (ftransfer->error != NULL) 
+			ftransfer->error("Fail sending hash of file.", ftransfer->err_data);
+		return false;
+    }
+    /*
+     * Receiving answ
+     */
+    if (!tcp_client_recv(ftransfer->client, (void *)&answ, sizeof(answ))) {
+       	if (ftransfer->error != NULL) 
+			ftransfer->error("Fail receiving file hash answare.", ftransfer->err_data);
+		return false;
+    }        
+    if (answ.code != HR_OK) {
+      	if (ftransfer->error != NULL) 
+			ftransfer->error("Bad sended file checksum.", ftransfer->err_data);
+		return false;
+    }
+    fclose(file);
     return true;
 }
 
@@ -273,6 +324,7 @@ bool file_transfer_recv_file(struct file_transfer *ftransfer, const char *path)
 			fclose(file);
 			return false;
 		}
+		fsync(fileno(file));
     	fclose(file);
 
     	ret_val = SHA512_Final(lhash.hash, &sha_ctx);
@@ -306,6 +358,62 @@ bool file_transfer_recv_file(struct file_transfer *ftransfer, const char *path)
 			return false;
         }
     	return true;
+    }
+    /*
+     * If size of file >= BLOCK_SIZE
+     * Receiving each block of file
+     */
+    for (unsigned long i = 0; i < finfo.blocks; i++) {
+    	if (!recv_file_data(ftransfer, file, BLOCK_SIZE, &sha_ctx)) {
+			if (ftransfer->error != NULL) 
+				ftransfer->error("Fail receiving file.", ftransfer->err_data);
+			fclose(file);
+			return false;
+		}
+    }
+    /*
+     * Receiving last block of file
+     */
+    if (finfo.last_block != 0) {
+    	if (!recv_file_data(ftransfer, file, finfo.last_block, &sha_ctx)) {
+			if (ftransfer->error != NULL) 
+				ftransfer->error("Fail receiving file.", ftransfer->err_data);
+			fclose(file);
+			return false;
+		}
+    }
+    fsync(fileno(file));
+    fclose(file);
+
+    ret_val = SHA512_Final(lhash.hash, &sha_ctx);
+    if (!ret_val) {
+       	if (ftransfer->error != NULL) 
+			ftransfer->error("Fail finalization of sha512.", ftransfer->err_data);
+		return false;
+    }
+    /*
+     * Receiving file hash
+     */
+    if (!tcp_client_recv(ftransfer->client, (void *)&fhash, sizeof(fhash))) {
+       	if (ftransfer->error != NULL) 
+			ftransfer->error("Fail receiving hash of file.", ftransfer->err_data);
+		return false;
+    }
+    if (!compare_hashes(lhash.hash, fhash.hash))
+       	answ.code = HR_FAIL;
+    answ.code = HR_OK;
+    /*
+     * Sending answ
+     */
+    if (!tcp_client_send(ftransfer->client, (const void *)&answ, sizeof(answ))) {
+       	if (ftransfer->error != NULL) 
+			ftransfer->error("Fail sending file hash answare.", ftransfer->err_data);
+		return false;
+    }        
+    if (answ.code != HR_OK) {
+       	if (ftransfer->error != NULL) 
+			ftransfer->error("Bad receiving file checksum.", ftransfer->err_data);
+		return false;
     }
     return true;
 }

@@ -66,7 +66,7 @@ void new_session(struct tcp_client *client, void *data)
 void *server_thread(void *data)
 {
 	struct server_data *sdata = (struct server_data *)data;
-	if (!tcp_server_bind(sdata->server, 5000, 10)) {
+	if (!tcp_server_bind(sdata->server, 5001, 10)) {
 		sdata->start_err = true;
 	}
 	return NULL;
@@ -76,7 +76,7 @@ void exit_fail()
 {
 	puts("-------------------------");
 	puts("[ERROR] Test crashed!");
-	unlink("out/test.txt");
+	unlink("out/test.jpg");
 	rmdir("out");
 	exit(-1);
 }
@@ -103,7 +103,7 @@ int main(void)
 	pthread_create(&srv_th, NULL, server_thread, (void *)&sdata);
 	pthread_detach(srv_th);
 
-	puts("Starting \"Send small files\" test...");
+	puts("Starting \"Send big files\" test...");
 	puts("-------------------------");
 	mkdir("out", 0777);
 
@@ -114,12 +114,12 @@ int main(void)
 	puts("[OK] Server started.");
 	sleep(1);
 
-	if (!tcp_client_connect(&client, "127.0.0.1", 5000)) {
+	if (!tcp_client_connect(&client, "127.0.0.1", 5001)) {
 		puts("[FAIL] Can not connect to server.");
 		exit_fail();
 	}
 	puts("[OK] Client connected.");
-	if (!file_transfer_send_file(&ftransfer, "test.txt")) {
+	if (!file_transfer_send_file(&ftransfer, "test.jpg")) {
 		puts("[FAIL] Error sending file.");
 		exit_fail();
 	}
@@ -129,7 +129,7 @@ int main(void)
 		exit_fail();
 	puts("-------------------------");
 	puts("[PASSED] Test finished!");
-	unlink("out/test.txt");
+	unlink("out/test.jpg");
 	rmdir("out");
 	puts("====================================");
 	return 0;
