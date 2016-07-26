@@ -1,21 +1,19 @@
 CC=gcc
 CFLAGS=-Wall -I. -std=gnu99 -pedantic -march=native -O2 -Wno-pointer-arith
-LDFLAGS=-ljansson
-LDFLAGS2=-lpthread
-LDFLAGS3=-lssl -lcrypto
+LDFLAGS=-lpthread -lssl -lcrypto
 OUTLIST=main.o tcpclient.o configs.o utils.o log.o checkermain.o cloudclient.o checkerlife.o
 
 
 all: cloud
 
 cloud: $(OUTLIST)
-	$(CC) $(OUTLIST) -o cloudclient $(CFLAGS) $(LDFLAGS) $(LDFLAGS2) $(LDFLAGS3)
+	$(CC) $(OUTLIST) -o cloudclient $(CFLAGS) $(LDFLAGS)
 
 main.o: main.c
 	$(CC) -c main.c $(CFLAGS)
 
 configs.o: ../configs.c
-	$(CC) -c ../configs.c $(CFLAGS) $(LDFLAGS)
+	$(CC) -c ../configs.c $(CFLAGS)
 
 tcpclient.o: ../tcpclient.c
 	$(CC) -c ../tcpclient.c $(CFLAGS)
@@ -33,7 +31,7 @@ checkerlife.o: ../checkerlife.c
 	$(CC) -c ../checkerlife.c $(CFLAGS)
 
 cloudclient.o: ../cloudclient.c
-	$(CC) -c ../cloudclient.c $(CFLAGS) $(LDFLAGS3)
+	$(CC) -c ../cloudclient.c $(CFLAGS)
 
 
 install:
@@ -43,3 +41,4 @@ remove:
 clean:
 	-rm cloudclient
 	-rm *.o
+	-rm *.log

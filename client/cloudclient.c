@@ -26,11 +26,6 @@ enum {
 	REGULAR_LOGIN = 0
 };
 
-enum {
-	LOGIN_OK,
-	LOGIN_FAIL,
-};
-
 struct login_data {
 	uint8_t first;
 	unsigned id;
@@ -46,15 +41,11 @@ struct login_answ {
 static struct cloud_client {
 	char username[100];
 	char passwd_hash[129];
-	pthread_mutex_t mutex;
-	struct tcp_client login_client;
 
-	void *err_data;
-	void (*error)(const char *message, void*);
-} cloud = {
-	.err_data = NULL,
-	.error = NULL
-};
+	pthread_mutex_t mutex;
+
+	struct tcp_client login_client;
+} cloud;
 
 
 static void convert_hash(const unsigned char *hash, char *out)
@@ -74,72 +65,54 @@ void cloud_client_init(void)
 	pthread_mutex_init(&cloud.mutex, NULL);
 }
 
-bool cloud_client_load_cfg(const char *filename)
+uint8_t cloud_client_load_cfg(const char *filename)
 {
-	if (!configs_load(filename)) {
-		log_local("Fail loading configs.", LOG_ERROR);
-		if (cloud.error != NULL)
-			cloud.error("Fail loading configs.", cloud.err_data);
-		return false;
-	}
-	return true;
+	return configs_load(filename);
 }
 
 bool cloud_client_set_log(const char *filename)
 {
-	if (!log_set_path(filename)) {
-		if (cloud.error != NULL)
-			cloud.error("Log path is to long.", cloud.err_data);
-		return false;
-	}
-	return true;
+	return log_set_path(filename);
 }
 
-bool cloud_client_login(const char *username, const char *passwd)
+uint8_t cloud_client_login(const char *username, const char *passwd)
 {
 	int ret_val;
 	SHA512_CTX sha_ctx;
-	unsigned char hash[SHA512_DIGEST_LENGTH];
 	struct login_data ldata;
 	struct login_answ lansw;
+	unsigned char hash[SHA512_DIGEST_LENGTH];
 	struct server_cfg *sc = (struct server_cfg *)configs_get_server();
 
 	if (strlen(username) > 99 || strlen(passwd) > 99) {
 		log_local("Login: Username or Password is to long.", LOG_ERROR);
-		if (cloud.error != NULL)
-			cloud.error("Login: Username or Password is to long.", cloud.err_data);
-		return false;
+		return LOGIN_LONG;
 	}
 
 	if (!strcmp(username, "") || !strcmp(passwd, "")) {
 		log_local("Login: Username or Paaword is empty.", LOG_ERROR);
-		if (cloud.error != NULL)
-			cloud.error("Login: Username or Password is empty.", cloud.err_data);
-		return false;
+		return LOGIN_EMPTY;
 	}	
 	/*
 	 * Generating sha512 hash passwd
 	 */
 	ret_val = SHA512_Init(&sha_ctx);
 	if (!ret_val) {
-		if (cloud.error != NULL)
-			cloud.error("Login: SHA512 init fail.", cloud.err_data);
-		return false;
+		log_local("Login: SHA512 init fail.", LOG_ERROR);
+		return LOGIN_SHA_INIT_ERR;
 	}
 	/*
 	 * Generating password hash
 	 */
 	ret_val = SHA512_Update(&sha_ctx, (const void *)passwd, strlen(passwd));
 	if (!ret_val) {
-		if (cloud.error != NULL)
-			cloud.error("Login: Fail update passwd hash.", cloud.err_data);
-		return false;
+		log_local("Login: Fail update passwd hash.", LOG_ERROR);
+		return LOGIN_SHA_UPDATE_ERR;
 	}
 	ret_val = SHA512_Final(hash, &sha_ctx);
     if (!ret_val) {
-      	if (cloud.error != NULL) 
-			cloud.error("Login: Fail finalization of sha512.", cloud.err_data);
-		return false;
+    	log_local("Login: Fail finalization of sha512.", LOG_ERROR);
+    	return LOGIN_SHA_FINAL_ERR;
     }
 
     strncpy(cloud.username, username, 99);
@@ -150,9 +123,7 @@ bool cloud_client_login(const char *username, const char *passwd)
 	 */
 	 if (!tcp_client_connect(&cloud.login_client, sc->ip, sc->port)) {
 		log_local("Fail connecting to login server!", LOG_ERROR);
-		if (cloud.error != NULL)
-			cloud.error("Fail connecting to login server!", cloud.err_data);
-		return false;
+		return LOGIN_CONNECTION_ERR;
 	}
 
 	strncpy(ldata.login, cloud.username, 99);
@@ -162,16 +133,12 @@ bool cloud_client_login(const char *username, const char *passwd)
 	if (!tcp_client_send(&cloud.login_client, (const void *)&ldata, sizeof(ldata))) {
 		tcp_client_close(&cloud.login_client);
 		log_local("Fail sending login data.", LOG_ERROR);
-		if (cloud.error != NULL)
-			cloud.error("Fail sending login data.", cloud.err_data);
-		return false;
+		return LOGIN_SEND_ERR;
 	}
 	if (!tcp_client_recv(&cloud.login_client, (void *)&lansw, sizeof(lansw))) {
 		tcp_client_close(&cloud.login_client);
 		log_local("Fail sreceiving login answare.", LOG_ERROR);
-		if (cloud.error != NULL)
-			cloud.error("Fail sending login data.", cloud.err_data);
-		return false;
+		return LOGIN_ANSW_ERR;
 	}
 	tcp_client_close(&cloud.login_client);
 
@@ -180,11 +147,9 @@ bool cloud_client_login(const char *username, const char *passwd)
 	 */
 	if (lansw.code != LOGIN_OK) {
 		log_local("Fail authentication.", LOG_ERROR);
-		if (cloud.error != NULL)
-			cloud.error("Fail authentication.", cloud.err_data);
-		return false;
+		return LOGIN_FAIL;
 	}
-	return true;
+	return LOGIN_OK;
 }
 
 void cloud_client_start(void)
@@ -205,8 +170,6 @@ void cloud_client_free(void)
 
 void cloud_client_set_error_cb(void (*error)(const char*, void*), void *data)
 {
-	cloud.err_data = data;
-	cloud.error = error;
 	checker_main_set_error_cb(error, data);
 	checker_life_set_error_cb(error, data);
 }

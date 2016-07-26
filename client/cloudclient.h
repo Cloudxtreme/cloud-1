@@ -12,9 +12,30 @@
 #ifndef __CLOUD_CLIENT_H__
 #define __CLOUD_CLIENT_H__
 
+#include <stdint.h>
 #include <stdbool.h>
 
+enum configs_codes {
+	CFG_OK,
+	CFG_FILE_NOT_FOUND,
+	CFG_MCC_INTERVAL_ERROR,
+	CFG_LCC_INTERVAL_ERROR,
+	CFG_SC_IP_ERROR,
+	CFG_SC_PORT_ERROR
+};
 
+enum login_codes {
+	LOGIN_OK,
+	LOGIN_FAIL,
+	LOGIN_LONG,
+	LOGIN_EMPTY,
+	LOGIN_SHA_INIT_ERR,
+	LOGIN_SHA_UPDATE_ERR,
+	LOGIN_SHA_FINAL_ERR,
+	LOGIN_CONNECTION_ERR,
+	LOGIN_SEND_ERR,
+	LOGIN_ANSW_ERR
+};
 /*
  * Cloud client initialization
  */
@@ -33,20 +54,20 @@ bool cloud_client_set_log(const char *filename);
  * Loading cloud client configs JSON file
  * @filename: path to configs file
  *
- * returns false: if fail loading file and call error_cb
- * returns true: if ok
+ * returns configs_codes: if fail loading file
+ * returns CFG_OK: if loading configs ok
  */
-bool cloud_client_load_cfg(const char *filename);
+uint8_t cloud_client_load_cfg(const char *filename);
 
 /**
  * Checking login information
  * @username: login of user
  * @passwd: password of user
  *
- * returns false: if login fail and call error_cb
- * returns true: if login ok
+ * returns login_codes: if login fail
+ * returns LOGIN_OK: if login ok
  */
-bool cloud_client_login(const char *username, const char *passwd);
+uint8_t cloud_client_login(const char *username, const char *passwd);
 
 /*
  * Starting all threads of cloud client

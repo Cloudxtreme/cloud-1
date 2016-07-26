@@ -12,12 +12,10 @@
 #ifndef __CONFIGS_H__
 #define __CONFIGS_H__
 
+#include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
 
-struct server_cfg {
-	char ip[16];
-	unsigned port;	
-};
 
 struct main_checker_cfg {
 	unsigned interval;
@@ -26,6 +24,22 @@ struct main_checker_cfg {
 struct life_checker_cfg {
 	unsigned interval;
 };
+
+struct server_cfg {
+	char ip[16];
+	unsigned port;	
+};
+
+
+/**
+ * Loading configs from file to RAM
+ * @filename: name of json configs file
+ *
+ * returns CFG_OK: if reading ok
+ * returns error code: if fail reading
+ */
+uint8_t configs_load(const char *filename);
+
 
 /*
  * Server configs
@@ -41,15 +55,6 @@ struct main_checker_cfg *configs_get_main_checker();
  * Server life timer configs
  */
 struct life_checker_cfg *configs_get_life_checker();
-
-/**
- * Loading configs from file to RAM
- * @filename: name of json configs file
- *
- * returns false: if fail loading
- * returns true: if succeful loading
- */
-bool configs_load(const char *filename);
 
 
 #endif
