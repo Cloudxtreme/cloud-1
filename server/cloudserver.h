@@ -13,7 +13,18 @@
 #define __CLOUD_SERVER_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 
+enum {
+    CFG_OK,
+    CFG_FILE_NOT_FOUND,
+    CFG_SC_PORT_ERROR
+};
+
+
+bool cloud_server_set_log(const char *filename);
+
+uint8_t cloud_server_load_cfg(const char *filename);
 /*
  * Starting cloud server
  */

@@ -62,6 +62,7 @@ static void new_session(struct tcp_client *s_client, void *data)
 	pthread_mutex_unlock(&cloud.mutex);
 	
 	//Checking login and password
+	lansw.code = LOGIN_OK;
 
 	if (!tcp_client_send(s_client, (const void *)&lansw, sizeof(lansw))) {
 		pthread_mutex_lock(&cloud.mutex);
@@ -98,10 +99,20 @@ bool cloud_server_start()
 	pthread_mutex_init(&cloud.mutex, NULL);
 
 	tcp_server_set_newsession_cb(&cloud.server, new_session, NULL);
-	if (!tcp_server_bind(&cloud.server, sc->port, sc->max_users)) {
+	if (!tcp_server_bind(&cloud.server, sc->port, sc->max_clients)) {
 		log_local("Fail binding tcp server.", LOG_ERROR);
 		return false;
 	}
 	pthread_mutex_destroy(&cloud.mutex);
 	return true;
+}
+
+bool cloud_server_set_log(const char *filename)
+{
+	return log_set_path(filename);
+}
+
+uint8_t cloud_server_load_cfg(const char *filename)
+{
+	return configs_load(filename);
 }

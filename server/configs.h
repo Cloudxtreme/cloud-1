@@ -13,10 +13,11 @@
 #define __CONFIGS_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 
 struct server_cfg {
 	unsigned port;
-	unsigned max_users;
+	unsigned max_clients;
 };
 
 /*
@@ -28,10 +29,10 @@ struct server_cfg *configs_get_server();
  * Loading configs from file to RAM
  * @filename: name of json configs file
  *
- * returns false: if fail loading
- * returns true: if succeful loading
+ * returns error_code: if fail loading
+ * returns CFG_OK: if succeful loading
  */
-bool configs_load(const char *filename);
+uint8_t configs_load(const char *filename);
 
 
 #endif

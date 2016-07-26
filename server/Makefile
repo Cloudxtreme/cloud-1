@@ -1,20 +1,19 @@
 CC=gcc
 CFLAGS=-Wall -I. -std=gnu99 -pedantic -march=native -O2 -Wno-pointer-arith
-LDFLAGS=-ljansson
-LDFLAGS2=-lpthread
+LDFLAGS=-lpthread
 OUTLIST=main.o tcpclient.o configs.o utils.o log.o tcpserver.o cloudserver.o
 
 
 all: meteo
 
 meteo: $(OUTLIST)
-	$(CC) $(OUTLIST) -o cloudclient $(CFLAGS) $(LDFLAGS) $(LDFLAGS2)
+	$(CC) $(OUTLIST) -o cloudclient $(CFLAGS) $(LDFLAGS)
 
 main.o: main.c
 	$(CC) -c main.c $(CFLAGS)
 
 configs.o: configs.c
-	$(CC) -c configs.c $(CFLAGS) $(LDFLAGS)
+	$(CC) -c configs.c $(CFLAGS)
 
 tcpclient.o: tcpclient.c
 	$(CC) -c tcpclient.c $(CFLAGS)
@@ -39,3 +38,4 @@ remove:
 clean:
 	-rm cloudclient
 	-rm *.o
+	-rm *.log

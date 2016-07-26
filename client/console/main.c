@@ -41,7 +41,7 @@ int main(void)
 	cloud_client_set_error_cb(error_handle, NULL);
 	cloud_client_set_update_status_cb(update_status_handle, NULL);
 
-	ret_val = cloud_client_load_cfg("../cloudclient.cfg");
+	ret_val = cloud_client_load_cfg("../cloudclient.conf");
 	if (ret_val != CFG_OK) {
 		printf("%s", "Configs: ");
 
