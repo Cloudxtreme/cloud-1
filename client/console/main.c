@@ -1,4 +1,5 @@
 /* File Cloud project
+ * Console application
  *
  * Copyright (C) 2016 Sergey Denisov.
  * Written by Sergey Denisov aka LittleBuster (DenisovS21@gmail.com)
@@ -9,9 +10,20 @@
  * of the Licence, or (at your option) any later version.
  */
 
-#include "cloudclient.h"
+#include "../cloudclient.h"
 #include <stdio.h>
 #include <string.h>
+
+
+void error_handle(const char *message, void *data)
+{
+	//puts(message);
+}
+
+void update_status_handle(bool status, void *data)
+{
+	puts("update status");
+}
 
 
 int main(void)
@@ -22,11 +34,13 @@ int main(void)
 
 	puts("Cloud client.");
 	cloud_client_init();
-	if (!cloud_client_set_log("/var/log/cloudclient.log")) {
-		puts("Log path is to long!");
+	if (!cloud_client_set_log("cloudclient.log"))
 		return -1;
-	}
-	if (!cloud_client_load_cfg("cloudclient.cfg"))
+
+	cloud_client_set_error_cb(error_handle, NULL);
+	cloud_client_set_update_status_cb(update_status_handle, NULL);
+
+	if (!cloud_client_load_cfg("../cloudclient.cfg"))
 		return -1;
 
 	puts("Login:");
@@ -41,10 +55,8 @@ int main(void)
 		return -1;
 	}
 
-	if (!cloud_client_login(login, passwd)) {
-		puts("Fail. Bad login.");
+	if (!cloud_client_login(login, passwd))
 		return -1;
-	}
 
 	puts("Starting cloud client...");
 	cloud_client_start();

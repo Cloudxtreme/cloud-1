@@ -15,9 +15,11 @@
 #include <pthread.h>
 
 
-void checker_life_init(void);
-
 void checker_life_start(pthread_mutex_t *mutex);
+
+void checker_life_set_error_cb(void (*error)(const char *message, void*), void *data);
+
+void checker_life_set_update_status_cb(void (*update_status)(bool, void*), void *data);
 
 
 #endif

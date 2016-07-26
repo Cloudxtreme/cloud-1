@@ -18,18 +18,38 @@
 #include <unistd.h>
 #include <errno.h>
 
+
 static struct {
+	bool status;
 	pthread_t thread;
-	void (*update_status)(bool);
-} checker;
+
+	void *update_data;
+	void (*update_status)(bool, void*);
+
+	void *err_data;
+	void (*error)(const char *message, void*);
+} checker = {
+	.status = false,
+	.err_data = NULL,
+	.error = NULL,
+	.update_status = NULL,
+	.update_data = NULL
+};
 
 
 static void checker_handle(void *data)
 {
+	bool status = false;
 	pthread_mutex_t *mutex = (pthread_mutex_t *)data;
 
-	if (checker.update_status != NULL)
-		checker.update_status(true);
+	if (checker.status != status) {
+		checker.status = status;
+		if (checker.update_status != NULL) {
+			pthread_mutex_lock(mutex);
+			checker.update_status(true, checker.update_data);
+			pthread_mutex_unlock(mutex);
+		}
+	}
 	puts("test life");
 }
 
@@ -47,13 +67,20 @@ static void *checker_thread(void *data)
 	return NULL;
 }
 
-void checker_life_init(void)
-{
-	checker.update_status = NULL;
-}
-
 void checker_life_start(pthread_mutex_t *mutex)
 {
 	pthread_create(&checker.thread, NULL, checker_thread, (void *)mutex);
 	pthread_detach(checker.thread);
+}
+
+void checker_life_set_error_cb(void (*error)(const char *message, void*), void *data)
+{
+	checker.error = error;
+	checker.err_data = data;
+}
+
+void checker_life_set_update_status_cb(void (*update_status)(bool, void*), void *data)
+{
+	checker.update_status = update_status;
+	checker.update_data = data;
 }

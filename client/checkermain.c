@@ -20,13 +20,18 @@
 
 static struct {
 	pthread_t thread;
-} checker;
+
+	void *err_data;
+	void (*error)(const char *message, void*);
+} checker = {
+	.err_data = NULL,
+	.error = NULL
+};
 
 
 static void checker_handle(void *data)
 {
-	pthread_mutex_t *mutex = (pthread_mutex_t *)data;
-
+	//pthread_mutex_t *mutex = (pthread_mutex_t *)data;
 	puts("test");
 }
 
@@ -44,8 +49,15 @@ static void *checker_thread(void *data)
 	return NULL;
 }
 
+
 void checker_main_start(pthread_mutex_t *mutex)
 {
 	pthread_create(&checker.thread, NULL, checker_thread, (void *)mutex);
 	pthread_detach(checker.thread);
+}
+
+void checker_main_set_error_cb(void (*error)(const char *message, void*), void *data)
+{
+	checker.error = error;
+	checker.err_data = data;
 }

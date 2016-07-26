@@ -17,6 +17,8 @@
 #include "checkerlife.h"
 #include "tcpclient.h"
 #include <stdint.h>
+#include <stdio.h>
+#include <openssl/sha.h>
 
 
 enum {
@@ -49,15 +51,27 @@ static struct cloud_client {
 
 	void *err_data;
 	void (*error)(const char *message, void*);
-} cloud;
+} cloud = {
+	.err_data = NULL,
+	.error = NULL
+};
 
+
+static void convert_hash(const unsigned char *hash, char *out)
+{
+	char sym[3];
+
+	for (size_t i = 0; i < SHA512_DIGEST_LENGTH; i++, hash++, out += 2) {
+		sprintf(sym, "%02X", *hash);
+		*out = sym[0];
+		*(out + 1) = sym[1];
+	}
+	*(out + 1) = '\0';
+} 
 
 void cloud_client_init(void)
 {
 	pthread_mutex_init(&cloud.mutex, NULL);
-	checker_life_init();
-	cloud.error = NULL;
-	cloud.err_data = NULL;
 }
 
 bool cloud_client_load_cfg(const char *filename)
@@ -73,12 +87,19 @@ bool cloud_client_load_cfg(const char *filename)
 
 bool cloud_client_set_log(const char *filename)
 {
-	return log_set_path(filename);
+	if (!log_set_path(filename)) {
+		if (cloud.error != NULL)
+			cloud.error("Log path is to long.", cloud.err_data);
+		return false;
+	}
+	return true;
 }
 
 bool cloud_client_login(const char *username, const char *passwd)
 {
-	char passwd_hash[129];
+	int ret_val;
+	SHA512_CTX sha_ctx;
+	unsigned char hash[SHA512_DIGEST_LENGTH];
 	struct login_data ldata;
 	struct login_answ lansw;
 	struct server_cfg *sc = (struct server_cfg *)configs_get_server();
@@ -93,13 +114,36 @@ bool cloud_client_login(const char *username, const char *passwd)
 	if (!strcmp(username, "") || !strcmp(passwd, "")) {
 		log_local("Login: Username or Paaword is empty.", LOG_ERROR);
 		if (cloud.error != NULL)
-			cloud.error("Login: Username or Paaword is empty.", cloud.err_data);
+			cloud.error("Login: Username or Password is empty.", cloud.err_data);
 		return false;
 	}	
-
 	/*
 	 * Generating sha512 hash passwd
 	 */
+	ret_val = SHA512_Init(&sha_ctx);
+	if (!ret_val) {
+		if (cloud.error != NULL)
+			cloud.error("Login: SHA512 init fail.", cloud.err_data);
+		return false;
+	}
+	/*
+	 * Generating password hash
+	 */
+	ret_val = SHA512_Update(&sha_ctx, (const void *)passwd, strlen(passwd));
+	if (!ret_val) {
+		if (cloud.error != NULL)
+			cloud.error("Login: Fail update passwd hash.", cloud.err_data);
+		return false;
+	}
+	ret_val = SHA512_Final(hash, &sha_ctx);
+    if (!ret_val) {
+      	if (cloud.error != NULL) 
+			cloud.error("Login: Fail finalization of sha512.", cloud.err_data);
+		return false;
+    }
+
+    strncpy(cloud.username, username, 99);
+    convert_hash(hash, cloud.passwd_hash);
 
 	/*
 	 * Sending login data to server
@@ -111,8 +155,8 @@ bool cloud_client_login(const char *username, const char *passwd)
 		return false;
 	}
 
-	strncpy(ldata.login, username, 99);
-	strncpy(ldata.passwd_hash, passwd_hash, 128);
+	strncpy(ldata.login, cloud.username, 99);
+	strncpy(ldata.passwd_hash, cloud.passwd_hash, 128);
 	ldata.first = FIRST_LOGIN;
 
 	if (!tcp_client_send(&cloud.login_client, (const void *)&ldata, sizeof(ldata))) {
@@ -140,8 +184,6 @@ bool cloud_client_login(const char *username, const char *passwd)
 			cloud.error("Fail authentication.", cloud.err_data);
 		return false;
 	}
-	strncpy(cloud.username, username, 99);
-	strncpy(cloud.passwd_hash, passwd_hash, 128);
 	return true;
 }
 
@@ -156,12 +198,20 @@ void cloud_client_free(void)
 	pthread_mutex_destroy(&cloud.mutex);
 }
 
+
 /*
- * Callbacks
+ * Cloud Callbacks
  */
 
 void cloud_client_set_error_cb(void (*error)(const char*, void*), void *data)
 {
 	cloud.err_data = data;
 	cloud.error = error;
+	checker_main_set_error_cb(error, data);
+	checker_life_set_error_cb(error, data);
+}
+
+void cloud_client_set_update_status_cb(void (*update_status)(bool, void*), void *data)
+{
+	checker_life_set_update_status_cb(update_status, data);
 }

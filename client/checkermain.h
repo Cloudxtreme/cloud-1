@@ -17,5 +17,7 @@
 
 void checker_main_start(pthread_mutex_t *mutex);
 
+void checker_main_set_error_cb(void (*error)(const char *message, void*), void *data);
+
 
 #endif
