@@ -30,7 +30,7 @@ struct login_data {
 	uint8_t first;
 	unsigned id;
 	char login[100];
-	char passwd_hash[129];	
+	char passwd_hash[129];
 };
 
 struct login_answ {
@@ -43,7 +43,6 @@ static struct cloud_client {
 	char passwd_hash[129];
 
 	pthread_mutex_t mutex;
-
 	struct tcp_client login_client;
 } cloud;
 
@@ -81,8 +80,10 @@ uint8_t cloud_client_login(const char *username, const char *passwd)
 	SHA512_CTX sha_ctx;
 	struct login_data ldata;
 	struct login_answ lansw;
+	struct user_login ulogin;
 	unsigned char hash[SHA512_DIGEST_LENGTH];
 	struct server_cfg *sc = (struct server_cfg *)configs_get_server();
+	struct user_cfg *uc = (struct user_cfg *)configs_get_user();
 
 	if (strlen(username) > 99 || strlen(passwd) > 99) {
 		log_local("Login: Username or Password is to long.", LOG_ERROR);
@@ -115,21 +116,21 @@ uint8_t cloud_client_login(const char *username, const char *passwd)
     	return LOGIN_SHA_FINAL_ERR;
     }
 
-    strncpy(cloud.username, username, 99);
-    convert_hash(hash, cloud.passwd_hash);
+    strncpy(ulogin.username, username, 99);
+    convert_hash(hash, ulogin.passwd_hash);
+    checker_main_set_login(&ulogin);
 
+    strncpy(ldata.login, ulogin.username, 99);
+	strncpy(ldata.passwd_hash, ulogin.passwd_hash, 128);
+	ldata.first = FIRST_LOGIN;
+	ldata.id = uc->id;
 	/*
 	 * Sending login data to server
 	 */
-	 if (!tcp_client_connect(&cloud.login_client, sc->ip, sc->port)) {
+	if (!tcp_client_connect(&cloud.login_client, sc->ip, sc->port)) {
 		log_local("Fail connecting to login server!", LOG_ERROR);
 		return LOGIN_CONNECTION_ERR;
 	}
-
-	strncpy(ldata.login, cloud.username, 99);
-	strncpy(ldata.passwd_hash, cloud.passwd_hash, 128);
-	ldata.first = FIRST_LOGIN;
-
 	if (!tcp_client_send(&cloud.login_client, (const void *)&ldata, sizeof(ldata))) {
 		tcp_client_close(&cloud.login_client);
 		log_local("Fail sending login data.", LOG_ERROR);
@@ -168,7 +169,7 @@ void cloud_client_free(void)
  * Cloud Callbacks
  */
 
-void cloud_client_set_error_cb(void (*error)(const char*, void*), void *data)
+void cloud_client_set_error_cb(void (*error)(const char*, uint8_t, void*), void *data)
 {
 	checker_main_set_error_cb(error, data);
 	checker_life_set_error_cb(error, data);

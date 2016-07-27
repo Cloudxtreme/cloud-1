@@ -15,9 +15,33 @@
 #include <pthread.h>
 
 
+struct user_login {
+	char username[100];
+	char passwd_hash[129];
+};
+
+
+/*
+ * Setting user login
+ */
+void checker_main_set_login(struct user_login *user);
+
+/**
+ * Start main application timer
+ * @mutex: main thread locker
+ */
 void checker_main_start(pthread_mutex_t *mutex);
 
-void checker_main_set_error_cb(void (*error)(const char *message, void*), void *data);
+/*
+ * Callbacks
+ */
+
+/**
+ * Setting error callback function
+ * @error: error function pointer
+ * @data: user data
+ */
+void checker_main_set_error_cb(void (*error)(const char *, uint8_t, void*), void *data);
 
 
 #endif

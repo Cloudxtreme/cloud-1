@@ -36,7 +36,9 @@ int main(void)
 		return -1;
 	}
 
-	if (!cloud_server_start())
+	if (!cloud_server_start()) {
+		puts("Fail binding server port.");
 		return -1;
+	}
 	return 0;
 }

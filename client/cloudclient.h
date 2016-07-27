@@ -36,6 +36,13 @@ enum login_codes {
 	LOGIN_SEND_ERR,
 	LOGIN_ANSW_ERR
 };
+
+enum error_codes {
+	ERR_CONNECT = 100,
+	ERR_SEND_LOGIN = 101,
+	ERR_RECV_LOGIN = 102,
+};
+
 /*
  * Cloud client initialization
  */
@@ -90,7 +97,7 @@ void cloud_client_free(void);
  * @error: error function pointer
  * @data: data pointer for callback
  */
-void cloud_client_set_error_cb(void (*error)(const char*, void*), void *data);
+void cloud_client_set_error_cb(void (*error)(const char*, uint8_t, void*), void *data);
 
 /**
  * Set update status callback

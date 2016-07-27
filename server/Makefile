@@ -4,10 +4,10 @@ LDFLAGS=-lpthread
 OUTLIST=main.o tcpclient.o configs.o utils.o log.o tcpserver.o cloudserver.o
 
 
-all: meteo
+all: cloud
 
-meteo: $(OUTLIST)
-	$(CC) $(OUTLIST) -o cloudclient $(CFLAGS) $(LDFLAGS)
+cloud: $(OUTLIST)
+	$(CC) $(OUTLIST) -o cloudsrv $(CFLAGS) $(LDFLAGS)
 
 main.o: main.c
 	$(CC) -c main.c $(CFLAGS)
@@ -36,6 +36,6 @@ install:
 remove:
 
 clean:
-	-rm cloudclient
+	-rm cloudsrv
 	-rm *.o
 	-rm *.log

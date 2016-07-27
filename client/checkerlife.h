@@ -15,10 +15,29 @@
 #include <pthread.h>
 
 
+/**
+ * Starting check life timer
+ * @mutex: main thread locker
+ */
 void checker_life_start(pthread_mutex_t *mutex);
 
-void checker_life_set_error_cb(void (*error)(const char *message, void*), void *data);
 
+/*
+ * Callbacks
+ */
+
+/**
+ * Setting error callbacl function
+ * @error: error function pointer
+ * @data: user data
+ */
+void checker_life_set_error_cb(void (*error)(const char *, uint8_t, void*), void *data);
+
+/**
+ * Setting update status callback function
+ * @update_status: update status function pointer
+ * @data: user data
+ */
 void checker_life_set_update_status_cb(void (*update_status)(bool, void*), void *data);
 
 

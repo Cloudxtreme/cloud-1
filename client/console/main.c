@@ -15,7 +15,7 @@
 #include <string.h>
 
 
-void error_handle(const char *message, void *data)
+void error_handle(const char *message, uint8_t code, void *data)
 {
 	//puts(message);
 }
@@ -76,9 +76,11 @@ int main(void)
 		return -1;
 	}
 
+	printf("%s", "Login...");
 	ret_val = cloud_client_login(login, passwd);
 	if (ret_val != LOGIN_OK) {
-		printf("%s", "Fail login: ");
+		printf("%s\n", "FAIL.");
+		printf("%s", "Error: ");
 
 		switch(ret_val) {
 			case LOGIN_FAIL:
@@ -111,6 +113,7 @@ int main(void)
 		}
 		return -1;
 	}
+	printf("%s\n", "OK.");
 
 	puts("Starting cloud client...");
 	cloud_client_start();

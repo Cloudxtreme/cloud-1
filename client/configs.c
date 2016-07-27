@@ -32,6 +32,7 @@ static struct {
     struct main_checker_cfg mcc;
     struct life_checker_cfg lcc;
     struct server_cfg sc;
+    struct user_cfg uc;
 } cfg;
 
 
@@ -168,8 +169,6 @@ uint8_t configs_load(const char *filename)
      */
     if (!configs_read_unsigned(file, &cfg.lcc.interval)) {
     	fclose(file);
-        printf("%d\n", (int)cfg.lcc.interval);
-        printf("%d\n", (int)cfg.mcc.interval);
     	return CFG_LCC_INTERVAL_ERROR;
     }
 	/*
@@ -185,6 +184,13 @@ uint8_t configs_load(const char *filename)
     if (!configs_read_unsigned(file, &cfg.sc.port)) {
     	fclose(file);
     	return CFG_SC_PORT_ERROR;
+    }
+    /*
+     * User id
+     */
+    if (!configs_read_unsigned(file, &cfg.uc.id)) {
+        fclose(file);
+        return CFG_SC_PORT_ERROR;
     }
 
     fclose(file);
@@ -204,4 +210,9 @@ struct life_checker_cfg *configs_get_life_checker()
 struct server_cfg *configs_get_server()
 {
     return &cfg.sc;
+}
+
+struct user_cfg *configs_get_user()
+{
+    return &cfg.uc;
 }

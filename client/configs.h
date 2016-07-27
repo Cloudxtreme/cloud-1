@@ -30,6 +30,10 @@ struct server_cfg {
 	unsigned port;	
 };
 
+struct user_cfg {
+	unsigned id;
+};
+
 
 /**
  * Loading configs from file to RAM
@@ -55,6 +59,11 @@ struct main_checker_cfg *configs_get_main_checker();
  * Server life timer configs
  */
 struct life_checker_cfg *configs_get_life_checker();
+
+/*
+ * User configs
+ */
+struct user_cfg *configs_get_user();
 
 
 #endif
