@@ -110,11 +110,20 @@ static void checker_handle(void *data)
 		return;
 	}
 
-	struct flist *files = sync_get_file_list("/home/serg/");
+	char path[255];
+	char hash[129];
+	char full_path[512];
+	strcpy(path, "/home/serg/Загрузки/HT/");
+
+	struct flist *files = sync_get_file_list(path);
 
 	for (struct flist *fs = files; fs != NULL; fs = flist_next(fs)) {
 		struct file *cur_file = flist_get_file(fs);
-		puts(cur_file->name);
+		
+		strcpy(full_path, path);
+		strcat(full_path, cur_file->name);
+		sync_get_file_hash(full_path, hash);
+		puts(hash);
 	}
 	flist_free_all(files);
 

@@ -57,7 +57,7 @@ static void convert_hash(const unsigned char *hash, char *out)
 		*(out + 1) = sym[1];
 	}
 	*(out + 1) = '\0';
-} 
+}
 
 void cloud_client_init(void)
 {

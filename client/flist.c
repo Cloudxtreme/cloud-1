@@ -59,7 +59,6 @@ void flist_free_all(struct flist *list)
     while (list) {
         tmp = list;
         list = list->next;
-        if (tmp != NULL)
-            free(tmp);
+        free(tmp);
     }
 }
