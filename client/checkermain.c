@@ -13,6 +13,8 @@
 #include "configs.h"
 #include "checkermain.h"
 #include "tcpclient.h"
+#include "sync.h"
+#include "flist.h"
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -97,7 +99,7 @@ static void checker_handle(void *data)
 	}
 	if (!checker.is_connected) {
 		checker.is_connected = true;
-		puts("Connection succesful!");
+		puts("Connection successful!");
 	}
 	if (!tcp_client_send(&checker.client, (const void *)&ldata, sizeof(ldata))) {
 		exit_fail("Fail sending login data.", ERR_SEND_LOGIN, mutex);
@@ -107,6 +109,15 @@ static void checker_handle(void *data)
 		exit_fail("Fail receiving login answare.", ERR_RECV_LOGIN, mutex);
 		return;
 	}
+
+	struct flist *files = sync_get_file_list("/home/serg/");
+
+	for (struct flist *fs = files; fs != NULL; fs = flist_next(fs)) {
+		struct file *cur_file = flist_get_file(fs);
+		puts(cur_file->name);
+	}
+	flist_free_all(files);
+
 	tcp_client_close(&checker.client);
 }
 
