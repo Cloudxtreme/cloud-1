@@ -15,13 +15,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-enum configs_codes {
-	CFG_OK,
-	CFG_FILE_NOT_FOUND,
-	CFG_MCC_INTERVAL_ERROR,
-	CFG_LCC_INTERVAL_ERROR,
-	CFG_SC_IP_ERROR,
-	CFG_SC_PORT_ERROR
+enum {
+    CFG_OK,
+    CFG_FILE_NOT_FOUND,
+    CFG_MCC_INTERVAL_ERROR,
+    CFG_LCC_INTERVAL_ERROR,
+    CFG_SC_IP_ERROR,
+    CFG_SC_PORT_ERROR,
+    CFG_UC_ID_ERROR,
+    CFG_UC_PATH_ERROR
 };
 
 enum login_codes {

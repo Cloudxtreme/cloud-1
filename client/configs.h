@@ -27,11 +27,12 @@ struct life_checker_cfg {
 
 struct server_cfg {
 	char ip[16];
-	unsigned port;	
+	unsigned port;
 };
 
 struct user_cfg {
 	unsigned id;
+	char path[255];
 };
 
 

@@ -46,7 +46,7 @@ static void convert_hash(const unsigned char *hash, char *out)
 		*out = sym[0];
 		*(out + 1) = sym[1];
 	}
-	*(out + 1) = '\0';
+	*out = '\0';
 }
 
 bool sync_get_file_hash(const char *filename, char *hash)

@@ -73,6 +73,8 @@ static void exit_fail(const char *message, uint8_t code, pthread_mutex_t *mutex)
 
 static void checker_handle(void *data)
 {
+	char hash[129];
+	char full_path[512];
 	struct login_data ldata;
 	struct login_answ lansw;
 	pthread_mutex_t *mutex = (pthread_mutex_t *)data;
@@ -109,20 +111,18 @@ static void checker_handle(void *data)
 		exit_fail("Fail receiving login answare.", ERR_RECV_LOGIN, mutex);
 		return;
 	}
-
-	char path[255];
-	char hash[129];
-	char full_path[512];
-	strcpy(path, "/home/serg/Загрузки/HT/");
-
-	struct flist *files = sync_get_file_list(path);
+	/*
+	 * Sync files
+	 */
+	struct flist *files = sync_get_file_list(uc->path);
 
 	for (struct flist *fs = files; fs != NULL; fs = flist_next(fs)) {
 		struct file *cur_file = flist_get_file(fs);
 		
-		strcpy(full_path, path);
+		strcpy(full_path, uc->path);
 		strcat(full_path, cur_file->name);
-		sync_get_file_hash(full_path, hash);
+		if (!sync_get_file_hash(full_path, hash))
+			continue;
 		puts(hash);
 	}
 	flist_free_all(files);
@@ -136,6 +136,8 @@ static void *checker_thread(void *data)
 
 	for (;;) {
 		struct timeval tv = {mcc->interval, 0};
+		checker_handle(data);
+
 		if (select(0, NULL, NULL, NULL, &tv) == -1)
 			if (EINTR == errno)
 				continue;

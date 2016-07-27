@@ -20,7 +20,9 @@ enum {
     CFG_MCC_INTERVAL_ERROR,
     CFG_LCC_INTERVAL_ERROR,
     CFG_SC_IP_ERROR,
-    CFG_SC_PORT_ERROR
+    CFG_SC_PORT_ERROR,
+    CFG_UC_ID_ERROR,
+    CFG_UC_PATH_ERROR
 };
 
 enum {
@@ -190,7 +192,14 @@ uint8_t configs_load(const char *filename)
      */
     if (!configs_read_unsigned(file, &cfg.uc.id)) {
         fclose(file);
-        return CFG_SC_PORT_ERROR;
+        return CFG_UC_ID_ERROR;
+    }
+    /*
+     * User sync path
+     */
+    if (!configs_read_string(file, &cfg.uc.path, 254)) {
+        fclose(file);
+        return CFG_UC_PATH_ERROR;
     }
 
     fclose(file);
