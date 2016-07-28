@@ -13,6 +13,7 @@
 #include "configs.h"
 #include "checkermain.h"
 #include "tcpclient.h"
+#include "localbase.h"
 #include "sync.h"
 #include "flist.h"
 #include <errno.h>
@@ -73,7 +74,6 @@ static void exit_fail(const char *message, uint8_t code, pthread_mutex_t *mutex)
 
 static void checker_handle(void *data)
 {
-	char hash[129];
 	char full_path[512];
 	struct login_data ldata;
 	struct login_answ lansw;
@@ -118,12 +118,21 @@ static void checker_handle(void *data)
 
 	for (struct flist *fs = files; fs != NULL; fs = flist_next(fs)) {
 		struct file *cur_file = flist_get_file(fs);
-		
 		strcpy(full_path, uc->path);
 		strcat(full_path, cur_file->name);
-		if (!sync_get_file_hash(full_path, hash))
+
+		if (!local_base_check_file_exists(cur_file)) {
+			local_base_add_file(cur_file);
+			//remote base add file
+			//send file to server
 			continue;
-		puts(hash);
+		}
+
+		if (!local_base_compare_file_stat(cur_file)) {
+			local_base_update_file(cur_file);
+			//remote base update hash date
+			//send file
+		}
 	}
 	flist_free_all(files);
 

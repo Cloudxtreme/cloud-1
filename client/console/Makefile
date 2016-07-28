@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -I. -std=gnu99 -pedantic -march=native -O2 -Wno-pointer-arith
-LDFLAGS=-lpthread -lcrypto
-OUTLIST=main.o tcpclient.o configs.o utils.o log.o checkermain.o cloudclient.o checkerlife.o sync.o flist.o
+LDFLAGS=-lpthread -lcrypto -lsqlite3
+OUTLIST=main.o tcpclient.o configs.o utils.o log.o checkermain.o cloudclient.o checkerlife.o sync.o flist.o localbase.o
 
 
 all: cloud
@@ -38,6 +38,9 @@ sync.o: ../sync.c
 
 flist.o: ../flist.c
 	$(CC) -c ../flist.c $(CFLAGS)
+
+localbase.o: ../localbase.c
+	$(CC) -c ../localbase.c $(CFLAGS)
 
 
 install:

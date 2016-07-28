@@ -12,6 +12,7 @@
 #include "sync.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
@@ -24,7 +25,7 @@
 #define BUF_SIZE 512
 
 
-static int pos(const char *str, const char symb)
+static int pos(const char *restrict str, const char symb)
 {
     int p = 0;
 
@@ -37,7 +38,7 @@ static int pos(const char *str, const char symb)
     return -1;
 }
 
-static void convert_hash(const unsigned char *hash, char *out)
+static void convert_hash(const unsigned char *restrict hash, char *out)
 {
 	char sym[3];
 
@@ -48,6 +49,22 @@ static void convert_hash(const unsigned char *hash, char *out)
 	}
 	*out = '\0';
 }
+
+static void date_time_string(time_t *restrict time, char *out_str)
+{
+	char time_str[20];
+    char date_str[20];
+    struct tm *timeinfo;
+
+    timeinfo = localtime(time);
+    strftime(date_str, 20, "%F", timeinfo);
+    strftime(time_str, 20, "%T", timeinfo);
+
+    strcpy(out_str, date_str);
+    strcat(out_str, " ");
+    strcat(out_str, time_str);
+}
+
 
 bool sync_get_file_hash(const char *filename, char *hash)
 {
@@ -117,6 +134,7 @@ struct flist *sync_get_file_list(const char *path)
 
     	fstat(fd, &sbuf);
     	file->size = sbuf.st_size;
+    	date_time_string(&sbuf.st_mtime, file->change_date);
     	close(fd);
 
     	flist = flist_append(flist, file);

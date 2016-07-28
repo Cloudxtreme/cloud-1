@@ -197,7 +197,7 @@ uint8_t configs_load(const char *filename)
     /*
      * User sync path
      */
-    if (!configs_read_string(file, &cfg.uc.path, 254)) {
+    if (!configs_read_string(file, cfg.uc.path, 254)) {
         fclose(file);
         return CFG_UC_PATH_ERROR;
     }

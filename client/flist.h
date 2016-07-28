@@ -18,6 +18,7 @@
 struct file {
 	char name[255];
 	unsigned long size;
+	char change_date[50];
 };
 
 
