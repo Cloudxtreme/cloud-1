@@ -41,7 +41,8 @@ enum {
     CFG_SC_IP_ERROR,
     CFG_SC_PORT_ERROR,
     CFG_UC_ID_ERROR,
-    CFG_UC_PATH_ERROR
+    CFG_UC_PATH_ERROR,
+    CFG_LB_PATH_ERROR
 };
 
 /**
@@ -85,6 +86,14 @@ uint8_t cloud_client_login(const char *username, const char *passwd);
  */
 void cloud_client_start(void);
 
+/**
+ * Cloud client clean databases
+ *
+ * returns false: if error cleaning database
+ * returns true: if cleaning ok
+ */
+bool cloud_client_clean_base(void);
+
 /*
  * Free memory
  */
@@ -107,13 +116,15 @@ enum error_codes {
 	ERR_LSQL_OPEN = 103,
 	ERR_LSQL_SELECT = 104,
 	ERR_LSQL_INSERT = 105,
-	ERR_LSQL_UPDATE = 106
+	ERR_LSQL_UPDATE = 106,
+	ERR_LSQL_REMOVE = 107,
+	ERR_LSQL_CLEAN = 108
 };
 
 
 /**
  * Set error callback for all modules
- * @error_cb: error callback pointer
+ * @error_cb: error callback pointer:
  *		@message: error message
  *		@code: error code
  *		@data: user data
@@ -123,7 +134,7 @@ void cloud_client_set_error_cb(void (*error_cb)(const char *message, uint8_t cod
 
 /**
  * Set update status callback
- * @update_status_cb: status callback pointer
+ * @update_status_cb: status callback pointer:
  *		@status: server online status
  *		@data: user data
  * @data: user data pointer for callback

@@ -22,7 +22,8 @@ enum {
     CFG_SC_IP_ERROR,
     CFG_SC_PORT_ERROR,
     CFG_UC_ID_ERROR,
-    CFG_UC_PATH_ERROR
+    CFG_UC_PATH_ERROR,
+    CFG_LB_PATH_ERROR
 };
 
 enum {
@@ -35,6 +36,7 @@ static struct {
     struct life_checker_cfg lcc;
     struct server_cfg sc;
     struct user_cfg uc;
+    struct db_cfg dbc;
 } cfg;
 
 
@@ -201,6 +203,13 @@ uint8_t configs_load(const char *filename)
         fclose(file);
         return CFG_UC_PATH_ERROR;
     }
+    /*
+     * Local base path
+     */
+    if (!configs_read_string(file, cfg.dbc.lb_path, 254)) {
+        fclose(file);
+        return CFG_LB_PATH_ERROR;
+    }
 
     fclose(file);
     return CFG_OK;
@@ -224,4 +233,9 @@ struct server_cfg *configs_get_server()
 struct user_cfg *configs_get_user()
 {
     return &cfg.uc;
+}
+
+struct db_cfg *configs_get_database(void)
+{
+    return &cfg.dbc;
 }

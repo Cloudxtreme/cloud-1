@@ -35,6 +35,10 @@ struct user_cfg {
 	char path[255];
 };
 
+struct db_cfg {
+	char lb_path[255]; /* local base path */
+};
+
 
 /**
  * Loading configs from file to RAM
@@ -49,22 +53,27 @@ uint8_t configs_load(const char *filename);
 /*
  * Server configs
  */
-struct server_cfg *configs_get_server();
+struct server_cfg *configs_get_server(void);
 
 /*
  * Checker timer configs
  */
-struct main_checker_cfg *configs_get_main_checker();
+struct main_checker_cfg *configs_get_main_checker(void);
 
 /*
  * Server life timer configs
  */
-struct life_checker_cfg *configs_get_life_checker();
+struct life_checker_cfg *configs_get_life_checker(void);
 
 /*
  * User configs
  */
-struct user_cfg *configs_get_user();
+struct user_cfg *configs_get_user(void);
+
+/*
+ * User configs
+ */
+struct db_cfg *configs_get_database(void);
 
 
 #endif

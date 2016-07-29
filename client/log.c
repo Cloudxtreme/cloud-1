@@ -18,6 +18,7 @@
 
 static struct {
 	char path[PATH_SZIE];
+	char sync_path[PATH_SZIE];
 } log;
 
 
@@ -29,15 +30,28 @@ bool log_set_path(const char *path)
 	return true;
 }
 
+bool log_set_sync_path(const char *path)
+{
+	if (strlen(path) >= PATH_SZIE)
+		return false;
+	strncpy(log.sync_path, path, PATH_SZIE);
+	return true;	
+}
+
 bool log_local(const char *message, unsigned log_type)
 {
 	FILE *file;
 	char out_msg[255];
-	char date_time[DATETIME_SIZE];	
+	char date[DATE_SIZE];
+	char time[TIME_SIZE];	
 
-	date_time_now(date_time);
+	date_now(date);
+	time_now(time);
+
 	strcpy(out_msg, "[");
-	strcat(out_msg, date_time);
+	strcat(out_msg, date);
+	strcat(out_msg, "][");
+	strcat(out_msg, time);
 	strcat(out_msg, "][");
 
 	switch(log_type) {
@@ -66,4 +80,37 @@ bool log_local(const char *message, unsigned log_type)
 	}
 	fclose(file);
 	return true;
+}
+
+void log_sync(const char *message, const char *filename)
+{
+	FILE *file;
+	char out_msg[255];
+	char date[DATE_SIZE];
+	char time[TIME_SIZE];	
+
+	date_now(date);
+	time_now(time);
+
+	strcpy(out_msg, "[");
+	strcat(out_msg, date);
+	strcat(out_msg, "][");
+	strcat(out_msg, time);
+	strcat(out_msg, "] ");
+	strcat(out_msg, message);
+	if (filename != NULL) {
+		strcat(out_msg, " ");
+		strcat(out_msg, filename);
+	}
+	puts(out_msg);
+
+	file = fopen(log.sync_path, "a");
+	if (file == NULL)
+		return;
+
+	if (!fputs(out_msg, file)) {
+		fclose(file);
+		return;
+	}
+	fclose(file);
 }

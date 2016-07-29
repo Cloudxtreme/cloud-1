@@ -22,13 +22,21 @@ enum {
 
 
 /**
- * Setting path to log file
+ * Setting path for main log file
  * @path: path with filename
  *
  * returns true: if setted
- * returns false: if path size > max_path_size
+ * returns false: if path size to long
  */
 bool log_set_path(const char *path);
+
+/**
+ * Setting path for sync operations lof file
+ * 
+ * returrns true: if setted
+ * returns false: if path size to long
+ */
+bool log_set_sync_path(const char *path);
 
 /**
  * Writing message to local log file
@@ -39,6 +47,12 @@ bool log_set_path(const char *path);
  * returns false: if message writing error
  */
 bool log_local(const char *message, unsigned log_type);
+
+/**
+ * Writting message to local sync log file
+ * @message: log message
+ */
+void log_sync(const char *message, const char *filename);
 
 
 #endif

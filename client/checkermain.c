@@ -37,7 +37,9 @@ enum error_codes {
 	ERR_LSQL_OPEN = 103,
 	ERR_LSQL_SELECT = 104,
 	ERR_LSQL_INSERT = 105,
-	ERR_LSQL_UPDATE = 106
+	ERR_LSQL_UPDATE = 106,
+	ERR_LSQL_REMOVE = 107,
+	ERR_LSQL_CLEAN = 108
 };
 
 struct login_data {
@@ -116,7 +118,9 @@ static void checker_handle(void *data)
 	/*
 	 * Sync files
 	 */
-	if (!local_base_open("../sync.db")) {
+	struct db_cfg *dbc = configs_get_database();
+
+	if (!local_base_open(dbc->lb_path)) {
 		call_error("Can not open local database.", ERR_LSQL_OPEN, mutex);
 		tcp_client_close(&checker.client);
 	}
@@ -141,7 +145,7 @@ static void checker_handle(void *data)
 				call_error("Error sql insert query.", ERR_LSQL_INSERT, mutex);
 				continue;
 			}
-			printf("SYNC: New file added \"%s\"\n", cur_file->name);
+			log_sync("New file added", cur_file->name);
 			//remote base add file
 			//send file to server
 			continue;
@@ -163,13 +167,33 @@ static void checker_handle(void *data)
 			continue;
 		}
 
-		printf("SYNC: File was changed \"%s\"\n", cur_file->name);
+		log_sync("File was changed", cur_file->name);
 		//remote base update hash date
 		//send file
 	}
+	/*
+	 * Removing files as needed
+	 */
+	struct flist *del_files = local_base_find_deleted(files);
+	if (del_files == NULL) {
+		flist_free_all(files);
+		local_base_close();
+		tcp_client_close(&checker.client);
+		return;
+	}
+
+	for (struct flist *l = del_files; l != NULL; l = flist_next(l)) {
+		struct file *f = flist_get_file(l);
+		if (!local_base_remove(f))
+			call_error("Can not remove file from base", ERR_LSQL_REMOVE, mutex);
+		//Delete from remote base
+		//Delete file from remote storage
+		log_sync("File was deleted", f->name);
+	}
+
+	flist_free_all(del_files);
 	flist_free_all(files);
 	local_base_close();
-
 	tcp_client_close(&checker.client);
 }
 

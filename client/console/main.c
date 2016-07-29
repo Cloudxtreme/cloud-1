@@ -122,6 +122,23 @@ int main(void)
 		printf("#>");
 		if (scanf("%s", cmd) == 0)
 			puts("Incorrect command.");
+		if (!strcmp(cmd, "clean")) {
+			puts("Do you want to clean databases?");
+			
+			printf("%s", "#>");
+			if (scanf("%s", cmd) == 0) {
+				puts("Incorrect answare.");
+				continue;
+			}
+
+			if (!strcmp(cmd, "y")) {
+				if (!cloud_client_clean_base()) {
+					puts("Error cleaning databases!");
+					continue;
+				}
+				puts("Databases cleaned.");
+			}
+		}
 	}
 
 	cloud_client_free();

@@ -8,6 +8,7 @@
  * as published by the Free Software Foundation; either version 3
  * of the Licence, or (at your option) any later version.
  */
+
 #include "cloudclient.h"
 #include <pthread.h>
 #include <string.h>
@@ -16,6 +17,7 @@
 #include "checkermain.h"
 #include "checkerlife.h"
 #include "tcpclient.h"
+#include "localbase.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <openssl/sha.h>
@@ -164,6 +166,18 @@ void cloud_client_free(void)
 	pthread_mutex_destroy(&cloud.mutex);
 }
 
+bool cloud_client_clean_base(void)
+{
+	bool ret_val;
+	struct db_cfg *dbc = configs_get_database();
+
+	if (!local_base_open(dbc->lb_path))
+		return false;
+
+	ret_val = local_base_clean();
+	local_base_close();
+	return ret_val;
+}
 
 /*
  * Cloud Callbacks

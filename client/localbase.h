@@ -23,7 +23,9 @@ enum {
 	LB_SQL_ERROR,
 	LB_STAT_MATCH,
 	LB_STAT_NOT_MATCH,
-	LB_SQL_UPDATED
+	LB_SQL_UPDATED,
+	LB_FILE_NOTHING_DEL,
+	LB_FILES_DELETED
 };
 /**
  * Open sqlite file
@@ -52,7 +54,7 @@ uint8_t local_base_check_file_exists(struct file *restrict file);
  * returns LB_STAT_MATCH: if stats match
  * returns LB_SQL_ERROR: if called sql error
  */
-uint8_t local_base_compare_file_stat(struct file *restrict file);
+uint8_t local_base_compare_file_stat(struct file *file);
 
 /**
  * Add new file in base
@@ -72,10 +74,32 @@ bool local_base_add_file(struct file *restrict new_file);
  */
 bool local_base_update_file(struct file *restrict changed_file);
 
+/**
+ * Find deleted files in base
+ * @file_list: all files
+ *
+ * returns deleted files list
+ */ 
+struct flist *local_base_find_deleted(struct flist *file_list);
+
+/**
+ * Remove file from base
+ * @file: removing file
+ *
+ * returns true: if delete ok
+ * returns false: if delete error
+ */
+bool local_base_remove(struct file *restrict file);
+
+/*
+ * Clean local files table
+ */
+bool local_base_clean(void);
+
 /*
  * Close local base
  */
-void local_base_close();
+void local_base_close(void);
 
 
 #endif
