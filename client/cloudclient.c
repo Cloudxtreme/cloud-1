@@ -169,13 +169,13 @@ void cloud_client_free(void)
  * Cloud Callbacks
  */
 
-void cloud_client_set_error_cb(void (*error)(const char*, uint8_t, void*), void *data)
+void cloud_client_set_error_cb(void (*error_cb)(const char *message, uint8_t code, void *data), void *data)
 {
-	checker_main_set_error_cb(error, data);
-	checker_life_set_error_cb(error, data);
+	checker_main_set_error_cb(error_cb, data);
+	checker_life_set_error_cb(error_cb, data);
 }
 
-void cloud_client_set_update_status_cb(void (*update_status)(bool, void*), void *data)
+void cloud_client_set_update_status_cb(void (*update_status_cb)(bool status, void *data), void *data)
 {
-	checker_life_set_update_status_cb(update_status, data);
+	checker_life_set_update_status_cb(update_status_cb, data);
 }

@@ -38,10 +38,13 @@ void checker_main_start(pthread_mutex_t *mutex);
 
 /**
  * Setting error callback function
- * @error: error function pointer
+ * @error_cb: error callback pointer
+ * 		@message: error message
+ *		@code: error code
+ *		@data: user data
  * @data: user data
  */
-void checker_main_set_error_cb(void (*error)(const char *, uint8_t, void*), void *data);
+void checker_main_set_error_cb(void (*error_cb)(const char *message, uint8_t code, void *data), void *data);
 
 
 #endif

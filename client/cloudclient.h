@@ -15,35 +15,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-enum {
-    CFG_OK,
-    CFG_FILE_NOT_FOUND,
-    CFG_MCC_INTERVAL_ERROR,
-    CFG_LCC_INTERVAL_ERROR,
-    CFG_SC_IP_ERROR,
-    CFG_SC_PORT_ERROR,
-    CFG_UC_ID_ERROR,
-    CFG_UC_PATH_ERROR
-};
-
-enum login_codes {
-	LOGIN_OK,
-	LOGIN_FAIL,
-	LOGIN_LONG,
-	LOGIN_EMPTY,
-	LOGIN_SHA_INIT_ERR,
-	LOGIN_SHA_UPDATE_ERR,
-	LOGIN_SHA_FINAL_ERR,
-	LOGIN_CONNECTION_ERR,
-	LOGIN_SEND_ERR,
-	LOGIN_ANSW_ERR
-};
-
-enum error_codes {
-	ERR_CONNECT = 100,
-	ERR_SEND_LOGIN = 101,
-	ERR_RECV_LOGIN = 102,
-};
 
 /*
  * Cloud client initialization
@@ -59,6 +30,20 @@ void cloud_client_init(void);
  */
 bool cloud_client_set_log(const char *filename);
 
+/*
+ * Configs load returns codes
+ */
+enum {
+    CFG_OK,
+    CFG_FILE_NOT_FOUND,
+    CFG_MCC_INTERVAL_ERROR,
+    CFG_LCC_INTERVAL_ERROR,
+    CFG_SC_IP_ERROR,
+    CFG_SC_PORT_ERROR,
+    CFG_UC_ID_ERROR,
+    CFG_UC_PATH_ERROR
+};
+
 /**
  * Loading cloud client configs JSON file
  * @filename: path to configs file
@@ -67,6 +52,23 @@ bool cloud_client_set_log(const char *filename);
  * returns CFG_OK: if loading configs ok
  */
 uint8_t cloud_client_load_cfg(const char *filename);
+
+
+/*
+ * Login returns codes
+ */
+enum login_codes {
+	LOGIN_OK,
+	LOGIN_FAIL,
+	LOGIN_LONG,
+	LOGIN_EMPTY,
+	LOGIN_SHA_INIT_ERR,
+	LOGIN_SHA_UPDATE_ERR,
+	LOGIN_SHA_FINAL_ERR,
+	LOGIN_CONNECTION_ERR,
+	LOGIN_SEND_ERR,
+	LOGIN_ANSW_ERR
+};
 
 /**
  * Checking login information
@@ -94,19 +96,39 @@ void cloud_client_free(void);
  * If not used, all signals are NULL
  */
 
+
+/*
+ * Error callback codes
+ */
+enum error_codes {
+	ERR_CONNECT = 100,
+	ERR_SEND_LOGIN = 101,
+	ERR_RECV_LOGIN = 102,
+	ERR_LSQL_OPEN = 103,
+	ERR_LSQL_SELECT = 104,
+	ERR_LSQL_INSERT = 105,
+	ERR_LSQL_UPDATE = 106
+};
+
+
 /**
  * Set error callback for all modules
- * @error: error function pointer
+ * @error_cb: error callback pointer
+ *		@message: error message
+ *		@code: error code
+ *		@data: user data
  * @data: data pointer for callback
  */
-void cloud_client_set_error_cb(void (*error)(const char*, uint8_t, void*), void *data);
+void cloud_client_set_error_cb(void (*error_cb)(const char *message, uint8_t code, void *data), void *data);
 
 /**
  * Set update status callback
- * @update_status: status function pointer
- * @data: data pointer for callback
+ * @update_status_cb: status callback pointer
+ *		@status: server online status
+ *		@data: user data
+ * @data: user data pointer for callback
  */
-void cloud_client_set_update_status_cb(void (*update_status)(bool, void*), void *data);
+void cloud_client_set_update_status_cb(void (*update_status_cb)(bool status, void *data), void *data);
 
 
 #endif

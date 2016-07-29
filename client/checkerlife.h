@@ -27,18 +27,23 @@ void checker_life_start(pthread_mutex_t *mutex);
  */
 
 /**
- * Setting error callbacl function
- * @error: error function pointer
- * @data: user data
+ * Set error callback for checker life
+ * @error_cb: error callback pointer
+ *		@message: error message
+ *		@code: error code
+ *		@data: user data
+ * @data: data pointer for callback
  */
-void checker_life_set_error_cb(void (*error)(const char *, uint8_t, void*), void *data);
+void checker_life_set_error_cb(void (*error_cb)(const char *message, uint8_t code, void *data), void *data);
 
 /**
- * Setting update status callback function
- * @update_status: update status function pointer
- * @data: user data
+ * Set update status callback
+ * @update_status_cb: status callback pointer
+ *		@status: server online status
+ *		@data: user data
+ * @data: user data pointer for callback
  */
-void checker_life_set_update_status_cb(void (*update_status)(bool, void*), void *data);
+void checker_life_set_update_status_cb(void (*update_status_cb)(bool status, void *data), void *data);
 
 
 #endif

@@ -34,6 +34,10 @@ enum error_codes {
 	ERR_CONNECT = 100,
 	ERR_SEND_LOGIN = 101,
 	ERR_RECV_LOGIN = 102,
+	ERR_LSQL_OPEN = 103,
+	ERR_LSQL_SELECT = 104,
+	ERR_LSQL_INSERT = 105,
+	ERR_LSQL_UPDATE = 106
 };
 
 struct login_data {
@@ -54,7 +58,7 @@ static struct {
 	struct tcp_client client;
 
 	void *err_data;
-	void (*error)(const char *, uint8_t, void*);
+	void (*error)(const char*, uint8_t, void*);
 } checker = {
 	.is_connected = false,
 	.err_data = NULL,
@@ -62,9 +66,8 @@ static struct {
 };
 
 
-static void exit_fail(const char *message, uint8_t code, pthread_mutex_t *mutex)
+static void call_error(const char *message, uint8_t code, pthread_mutex_t *mutex)
 {
-	tcp_client_close(&checker.client);
 	pthread_mutex_lock(mutex);
 	log_local(message, LOG_ERROR);
 	if (checker.error != NULL)
@@ -74,6 +77,7 @@ static void exit_fail(const char *message, uint8_t code, pthread_mutex_t *mutex)
 
 static void checker_handle(void *data)
 {
+	uint8_t ret_val;
 	char full_path[512];
 	struct login_data ldata;
 	struct login_answ lansw;
@@ -91,11 +95,7 @@ static void checker_handle(void *data)
 	 * Sending login data to server
 	 */
 	if (!tcp_client_connect(&checker.client, sc->ip, sc->port)) {
-		pthread_mutex_lock(mutex);
-		log_local("Fail connecting to login server!", LOG_ERROR);
-		if (checker.error != NULL)
-			checker.error("Fail connecting to login server!", ERR_CONNECT, checker.err_data);
-		pthread_mutex_unlock(mutex);
+		call_error("Fail connecting to login server!", ERR_CONNECT, mutex);
 		checker.is_connected = false;
 		return;
 	}
@@ -104,16 +104,23 @@ static void checker_handle(void *data)
 		puts("Connection successful!");
 	}
 	if (!tcp_client_send(&checker.client, (const void *)&ldata, sizeof(ldata))) {
-		exit_fail("Fail sending login data.", ERR_SEND_LOGIN, mutex);
+		call_error("Fail sending login data.", ERR_SEND_LOGIN, mutex);
+		tcp_client_close(&checker.client);
 		return;
 	}
 	if (!tcp_client_recv(&checker.client, (void *)&lansw, sizeof(lansw))) {
-		exit_fail("Fail receiving login answare.", ERR_RECV_LOGIN, mutex);
+		call_error("Fail receiving login answare.", ERR_RECV_LOGIN, mutex);
+		tcp_client_close(&checker.client);
 		return;
 	}
 	/*
 	 * Sync files
 	 */
+	if (!local_base_open("../sync.db")) {
+		call_error("Can not open local database.", ERR_LSQL_OPEN, mutex);
+		tcp_client_close(&checker.client);
+	}
+
 	struct flist *files = sync_get_file_list(uc->path);
 
 	for (struct flist *fs = files; fs != NULL; fs = flist_next(fs)) {
@@ -121,20 +128,47 @@ static void checker_handle(void *data)
 		strcpy(full_path, uc->path);
 		strcat(full_path, cur_file->name);
 
-		if (!local_base_check_file_exists(cur_file)) {
-			local_base_add_file(cur_file);
+		/*
+		 * Search file in base
+		 */
+		ret_val = local_base_check_file_exists(cur_file);
+		if (ret_val == LB_SQL_ERROR) {
+			call_error("Error sql select query.", ERR_LSQL_SELECT, mutex);
+			continue;
+		}
+		if (ret_val == LB_FILE_NOT_FOUND) {
+			if (!local_base_add_file(cur_file)) {
+				call_error("Error sql insert query.", ERR_LSQL_INSERT, mutex);
+				continue;
+			}
+			printf("SYNC: New file added \"%s\"\n", cur_file->name);
 			//remote base add file
 			//send file to server
 			continue;
 		}
-
-		if (!local_base_compare_file_stat(cur_file)) {
-			local_base_update_file(cur_file);
-			//remote base update hash date
-			//send file
+		/*
+		 * If file exists check it
+		 */
+		ret_val = local_base_compare_file_stat(cur_file);
+		if (ret_val == LB_SQL_ERROR) {
+			call_error("Error compare files sql select query", ERR_LSQL_SELECT, mutex);
+			continue;
 		}
+		if (ret_val == LB_STAT_MATCH)
+			continue;
+
+		ret_val = local_base_update_file(cur_file);
+		if (ret_val == LB_SQL_ERROR) {
+			call_error("Error update file sql query.", ERR_LSQL_UPDATE, mutex);
+			continue;
+		}
+
+		printf("SYNC: File was changed \"%s\"\n", cur_file->name);
+		//remote base update hash date
+		//send file
 	}
 	flist_free_all(files);
+	local_base_close();
 
 	tcp_client_close(&checker.client);
 }
@@ -168,8 +202,8 @@ void checker_main_set_login(struct user_login *user)
 	strncpy(checker.ulogin.passwd_hash, user->passwd_hash, 128);
 }
 
-void checker_main_set_error_cb(void (*error)(const char *, uint8_t, void*), void *data)
+void checker_main_set_error_cb(void (*error_cb)(const char *message, uint8_t code, void *data), void *data)
 {
-	checker.error = error;
+	checker.error = error_cb;
 	checker.err_data = data;
 }

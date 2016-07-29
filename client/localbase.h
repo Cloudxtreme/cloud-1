@@ -13,9 +13,18 @@
 #define __LOCAL_BASE_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 #include "flist.h"
 
 
+enum {
+	LB_FILE_EXISTS,
+	LB_FILE_NOT_FOUND,
+	LB_SQL_ERROR,
+	LB_STAT_MATCH,
+	LB_STAT_NOT_MATCH,
+	LB_SQL_UPDATED
+};
 /**
  * Open sqlite file
  * @filename: base file
@@ -29,19 +38,21 @@ bool local_base_open(const char *filename);
  * Check file exists in base
  * @file: local file
  *
- * returns false: if file not found
- * returns: if file exists
+ * returns LB_FILE_NOT_FOUND: if file not found
+ * returns LB_FILE_EXISTS: if file exists
+ * returns LB_SQL_ERROR: if called sql error
  */
-bool local_base_check_file_exists(struct file *restrict file);
+uint8_t local_base_check_file_exists(struct file *restrict file);
 
 /**
  * Comparing files stats
  * @file: local file
  *
- * returns false: if stats not match
- * returns true: if stats match
+ * returns LB_STAT_NOT_MATCH: if stats not match
+ * returns LB_STAT_MATCH: if stats match
+ * returns LB_SQL_ERROR: if called sql error
  */
-bool local_base_compare_file_stat(struct file *restrict file);
+uint8_t local_base_compare_file_stat(struct file *restrict file);
 
 /**
  * Add new file in base

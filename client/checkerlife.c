@@ -27,7 +27,7 @@ static struct {
 	void (*update_status)(bool, void*);
 
 	void *err_data;
-	void (*error)(const char *message, uint8_t code, void*);
+	void (*error)(const char*, uint8_t, void*);
 } checker = {
 	.status = false,
 	.err_data = NULL,
@@ -72,14 +72,14 @@ void checker_life_start(pthread_mutex_t *mutex)
 	pthread_detach(checker.thread);
 }
 
-void checker_life_set_error_cb(void (*error)(const char *message, uint8_t code, void*), void *data)
+void checker_life_set_error_cb(void (*error_cb)(const char *message, uint8_t code, void *data), void *data)
 {
-	checker.error = error;
+	checker.error = error_cb;
 	checker.err_data = data;
 }
 
-void checker_life_set_update_status_cb(void (*update_status)(bool, void*), void *data)
+void checker_life_set_update_status_cb(void (*update_status_cb)(bool status, void *data), void *data)
 {
-	checker.update_status = update_status;
+	checker.update_status = update_status_cb;
 	checker.update_data = data;
 }
