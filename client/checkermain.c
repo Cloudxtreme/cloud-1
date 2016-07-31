@@ -39,7 +39,9 @@ enum error_codes {
 	ERR_LSQL_INSERT = 105,
 	ERR_LSQL_UPDATE = 106,
 	ERR_LSQL_REMOVE = 107,
-	ERR_LSQL_CLEAN = 108
+	ERR_LSQL_CLEAN = 108,
+	ERR_SEND_CMD = 109,
+	ERR_SEND_FILE = 110
 };
 
 struct login_data {
@@ -126,6 +128,7 @@ static void checker_handle(void *data)
 	}
 
 	struct flist *files = sync_get_file_list(uc->path);
+	file_transfer_init(&ftransfer, &checker.client);
 
 	for (struct flist *fs = files; fs != NULL; fs = flist_next(fs)) {
 		struct file *cur_file = flist_get_file(fs);
@@ -146,8 +149,23 @@ static void checker_handle(void *data)
 				continue;
 			}
 			log_sync("New file added", cur_file->name);
-			//remote base add file
-			//send file to server
+			/*
+			 * Remote base add file
+			 */
+			/*
+			 * Send file to server
+			 */
+			if (!tcp_client_send(&checker.client, (const void *)&ldata, sizeof(ldata))) {
+				call_error("Fail sending command.", ERR_SEND_CMD, mutex);
+				tcp_client_close(&checker.client);
+				return;
+			}
+			if (ftransfer_send_file(&ftransfer, full_path) != FT_SEND_OK) {
+				call_error("Fail sending file to server.", ERR_SEND_FILE, mutex);
+				tcp_client_close(&checker.client);
+				return;
+			}
+
 			continue;
 		}
 		/*
