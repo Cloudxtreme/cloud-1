@@ -137,8 +137,8 @@ uint8_t file_transfer_send_file(struct file_transfer *ftransfer, const char *fil
      */
     if (!tcp_client_send(ftransfer->client, (const void *)&finfo, sizeof(finfo))) {
     	fclose(file);
-		return FT_SEND_FINFO_ERR;
-    }
+        return FT_SEND_FINFO_ERR;
+    }    
 
     ret_val = SHA512_Init(&sha_ctx);
 	if (!ret_val) {
@@ -150,7 +150,7 @@ uint8_t file_transfer_send_file(struct file_transfer *ftransfer, const char *fil
      */
     if (finfo_buff.st_size < BLOCK_SIZE) {
     	if (!send_file_data(ftransfer, file, finfo_buff.st_size, &sha_ctx)) {
-			fclose(file);
+			fclose(file);             
 			return FT_SEND_BLOCK_ERR;
 		}
     	fclose(file);
@@ -173,17 +173,17 @@ uint8_t file_transfer_send_file(struct file_transfer *ftransfer, const char *fil
         	return FT_SEND_FAIL;
         
     	return FT_SEND_OK;
-    }
+    }    
     /*
      * If size of file >= BLOCK_SIZE
      * Sending each block of file
-     */
+     */     
     for (unsigned long i = 0; i < finfo.blocks; i++) {
     	if (!send_file_data(ftransfer, file, BLOCK_SIZE, &sha_ctx)) {
-			fclose(file);
+			fclose(file);            
 			return FT_SEND_BLOCK_ERR;
 		}
-    }
+    }    
     /*
      * Sending last block of file
      */
@@ -192,10 +192,10 @@ uint8_t file_transfer_send_file(struct file_transfer *ftransfer, const char *fil
 			fclose(file);
 			return FT_SEND_LAST_BLOCK_ERR;
 		}
-    }
+    }    
     ret_val = SHA512_Final(fhash.hash, &sha_ctx);
     if (!ret_val)
-        return FT_SHA_FINAL_ERR;
+        return FT_SHA_FINAL_ERR;    
     /*
      * Sending file hash
      */
@@ -206,7 +206,7 @@ uint8_t file_transfer_send_file(struct file_transfer *ftransfer, const char *fil
      */
     if (!tcp_client_recv(ftransfer->client, (void *)&answ, sizeof(answ)))
         return FT_HASH_RECV_ERR;
-       
+
     if (answ.code != HR_OK)
         return FT_SEND_FAIL;
 

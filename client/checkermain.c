@@ -16,6 +16,7 @@
 #include "localbase.h"
 #include "sync.h"
 #include "flist.h"
+#include "filetransfer.h"
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -41,7 +42,16 @@ enum error_codes {
 	ERR_LSQL_REMOVE = 107,
 	ERR_LSQL_CLEAN = 108,
 	ERR_SEND_CMD = 109,
-	ERR_SEND_FILE = 110
+	ERR_SEND_FILE = 110,
+	ERR_EXIT_SESSION = 111,
+	ERR_REMOVE_FILE = 112
+};
+
+enum cmds {
+	CMD_ADD_FILE,
+	CMD_REMOVE_FILE,
+	CMD_UPDATE_FILE,
+	CMD_SESSION_EXIT
 };
 
 struct login_data {
@@ -53,6 +63,12 @@ struct login_data {
 
 struct login_answ {
 	unsigned code;
+};
+
+struct command {
+	uint8_t code;
+	char param1[255];
+	char param2[255];
 };
 
 static struct {
@@ -85,6 +101,8 @@ static void checker_handle(void *data)
 	char full_path[512];
 	struct login_data ldata;
 	struct login_answ lansw;
+	struct command cmd;
+	struct file_transfer ftransfer;
 	pthread_mutex_t *mutex = (pthread_mutex_t *)data;
 	struct user_cfg *uc = (struct user_cfg *)configs_get_user();
 	struct server_cfg *sc = (struct server_cfg *)configs_get_server();
@@ -130,6 +148,9 @@ static void checker_handle(void *data)
 	struct flist *files = sync_get_file_list(uc->path);
 	file_transfer_init(&ftransfer, &checker.client);
 
+	/*
+	 * Sending each file if needed
+	 */
 	for (struct flist *fs = files; fs != NULL; fs = flist_next(fs)) {
 		struct file *cur_file = flist_get_file(fs);
 		strcpy(full_path, uc->path);
@@ -150,22 +171,22 @@ static void checker_handle(void *data)
 			}
 			log_sync("New file added", cur_file->name);
 			/*
-			 * Remote base add file
-			 */
-			/*
 			 * Send file to server
 			 */
-			if (!tcp_client_send(&checker.client, (const void *)&ldata, sizeof(ldata))) {
+			cmd.code = CMD_ADD_FILE;
+			strcpy(cmd.param1, cur_file->name);
+
+			if (!tcp_client_send(&checker.client, (const void *)&cmd, sizeof(cmd))) {
 				call_error("Fail sending command.", ERR_SEND_CMD, mutex);
 				tcp_client_close(&checker.client);
 				return;
 			}
-			if (ftransfer_send_file(&ftransfer, full_path) != FT_SEND_OK) {
+			ret_val = file_transfer_send_file(&ftransfer, full_path);
+			if (ret_val != FT_SEND_OK) {
 				call_error("Fail sending file to server.", ERR_SEND_FILE, mutex);
 				tcp_client_close(&checker.client);
 				return;
 			}
-
 			continue;
 		}
 		/*
@@ -186,30 +207,70 @@ static void checker_handle(void *data)
 		}
 
 		log_sync("File was changed", cur_file->name);
-		//remote base update hash date
-		//send file
+		/*
+		 * Send file to server
+		 */
+		cmd.code = CMD_UPDATE_FILE;
+		strcpy(cmd.param1, cur_file->name);		
+
+		if (!tcp_client_send(&checker.client, (const void *)&cmd, sizeof(cmd))) {
+			call_error("Fail sending command.", ERR_SEND_CMD, mutex);
+			tcp_client_close(&checker.client);
+			return;
+		}
+
+		ret_val = file_transfer_send_file(&ftransfer, full_path);
+		if (ret_val != FT_SEND_OK) {					
+			call_error("Fail sending file to server.", ERR_SEND_FILE, mutex);
+			tcp_client_close(&checker.client);
+			return;
+		}
 	}
 	/*
 	 * Removing files as needed
 	 */
 	struct flist *del_files = local_base_find_deleted(files);
 	if (del_files == NULL) {
+		cmd.code = CMD_SESSION_EXIT;
+		if (!tcp_client_send(&checker.client, (const void *)&cmd, sizeof(cmd))) {
+			call_error("Fail sending command.", ERR_EXIT_SESSION, mutex);
+			flist_free_all(files);
+			local_base_close();
+			tcp_client_close(&checker.client);
+			return;
+		}
+
 		flist_free_all(files);
 		local_base_close();
 		tcp_client_close(&checker.client);
 		return;
 	}
-
 	for (struct flist *l = del_files; l != NULL; l = flist_next(l)) {
 		struct file *f = flist_get_file(l);
 		if (!local_base_remove(f))
 			call_error("Can not remove file from base", ERR_LSQL_REMOVE, mutex);
-		//Delete from remote base
-		//Delete file from remote storage
+		
+		cmd.code = CMD_REMOVE_FILE;
+		strcpy(cmd.param1, f->name);
+
+		if (!tcp_client_send(&checker.client, (const void *)&cmd, sizeof(cmd))) {
+			call_error("Fail sending command.", ERR_REMOVE_FILE, mutex);
+			flist_free_all(files);
+			local_base_close();
+			tcp_client_close(&checker.client);
+			return;
+		}
 		log_sync("File was deleted", f->name);
 	}
-
 	flist_free_all(del_files);
+
+	cmd.code = CMD_SESSION_EXIT;
+	if (!tcp_client_send(&checker.client, (const void *)&cmd, sizeof(cmd))) {
+		call_error("Fail sending command.", ERR_EXIT_SESSION, mutex);
+		tcp_client_close(&checker.client);
+		return;
+	}
+
 	flist_free_all(files);
 	local_base_close();
 	tcp_client_close(&checker.client);

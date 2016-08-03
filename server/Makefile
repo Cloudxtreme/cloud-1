@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -I. -std=gnu99 -pedantic -march=native -O2 -Wno-pointer-arith
-LDFLAGS=-lpthread
-OUTLIST=main.o tcpclient.o configs.o utils.o log.o tcpserver.o cloudserver.o
+LDFLAGS=-lpthread -lcrypto
+OUTLIST=main.o tcpclient.o configs.o utils.o log.o tcpserver.o cloudserver.o filetransfer.o
 
 
 all: cloud
@@ -29,6 +29,9 @@ log.o: log.c
 
 utils.o: utils.c
 	$(CC) -c utils.c $(CFLAGS)
+
+filetransfer.o: filetransfer.c
+	$(CC) -c filetransfer.c $(CFLAGS)
 
 
 install:

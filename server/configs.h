@@ -20,10 +20,19 @@ struct server_cfg {
 	unsigned max_clients;
 };
 
+struct storage_cfg {
+	char path[255];
+};
+
 /*
  * Server configs
  */
-struct server_cfg *configs_get_server();
+struct server_cfg *configs_get_server(void);
+
+/*
+ * Storage
+ */
+struct storage_cfg *configs_get_storage(void);
 
 /**
  * Loading configs from file to RAM

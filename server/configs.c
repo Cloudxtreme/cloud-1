@@ -20,7 +20,8 @@
 enum {
     CFG_OK,
     CFG_FILE_NOT_FOUND,
-    CFG_SC_PORT_ERROR
+    CFG_SC_PORT_ERROR,
+    CFG_STC_PATH_ERROR
 };
 
 enum {
@@ -30,6 +31,7 @@ enum {
 
 static struct {
     struct server_cfg sc;
+    struct storage_cfg stc;
 } cfg;
 
 
@@ -168,12 +170,24 @@ uint8_t configs_load(const char *filename)
         fclose(file);
         return CFG_SC_PORT_ERROR;
     }
+    /*
+     * Storage cfg
+     */
+    if (!configs_read_string(file, cfg.stc.path, 254)) {
+        fclose(file);
+        return CFG_STC_PATH_ERROR;
+    }
 
     fclose(file);
     return CFG_OK;
 }
 
-struct server_cfg *configs_get_server()
+struct server_cfg *configs_get_server(void)
 {
     return &cfg.sc;
+}
+
+struct storage_cfg *configs_get_storage(void)
+{
+    return &cfg.stc;
 }

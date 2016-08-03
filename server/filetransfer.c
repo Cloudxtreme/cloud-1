@@ -131,11 +131,10 @@ uint8_t file_transfer_send_file(struct file_transfer *ftransfer, const char *fil
         finfo.last_block = finfo_buff.st_size % BLOCK_SIZE;
         finfo.blocks = (finfo_buff.st_size - finfo.last_block) / BLOCK_SIZE;
     }
-
     /*
      * Sending file info to server and checking answ
      */
-    if (!tcp_client_send(ftransfer->client, (const void *)&finfo, sizeof(finfo))) {
+    if (!tcp_client_send(ftransfer->client, (const void *)&finfo, sizeof(struct file_info))) {
     	fclose(file);
 		return FT_SEND_FINFO_ERR;
     }
@@ -150,7 +149,7 @@ uint8_t file_transfer_send_file(struct file_transfer *ftransfer, const char *fil
      */
     if (finfo_buff.st_size < BLOCK_SIZE) {
     	if (!send_file_data(ftransfer, file, finfo_buff.st_size, &sha_ctx)) {
-			fclose(file);
+			fclose(file);             
 			return FT_SEND_BLOCK_ERR;
 		}
     	fclose(file);
@@ -177,10 +176,10 @@ uint8_t file_transfer_send_file(struct file_transfer *ftransfer, const char *fil
     /*
      * If size of file >= BLOCK_SIZE
      * Sending each block of file
-     */
+     */     
     for (unsigned long i = 0; i < finfo.blocks; i++) {
     	if (!send_file_data(ftransfer, file, BLOCK_SIZE, &sha_ctx)) {
-			fclose(file);
+			fclose(file);            
 			return FT_SEND_BLOCK_ERR;
 		}
     }
@@ -218,7 +217,6 @@ uint8_t file_transfer_recv_file(struct file_transfer *ftransfer, const char *pat
 {
 	FILE *file;    
     int ret_val;
-    char filename[512];
     SHA512_CTX sha_ctx;
     struct file_info finfo;
     struct sock_answ answ;
@@ -230,17 +228,14 @@ uint8_t file_transfer_recv_file(struct file_transfer *ftransfer, const char *pat
     /*
      * Receiving file info
      */
-    if (!tcp_client_recv(ftransfer->client, (void *)&finfo, sizeof(finfo)))
+    if (!tcp_client_recv(ftransfer->client, (void *)&finfo, sizeof(struct file_info)))
     	return FT_RECV_FINFO_ERR;
 
     ret_val = SHA512_Init(&sha_ctx);
 	if (!ret_val)
 		return FT_SHA_INIT_ERR;
-	
-    strcpy(filename, path);
-    strcat(filename, finfo.filename);
 
-    file = fopen(filename, "wb");
+    file = fopen(path, "wb");
     if (file == NULL)
     	return FT_ACCESS_ERR;    
     /*

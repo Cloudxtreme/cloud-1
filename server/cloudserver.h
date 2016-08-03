@@ -18,13 +18,21 @@
 enum {
     CFG_OK,
     CFG_FILE_NOT_FOUND,
-    CFG_SC_PORT_ERROR
+    CFG_SC_PORT_ERROR,
+    CFG_STC_PATH_ERROR
 };
 
 
+/*
+ * Setting log path
+ */
 bool cloud_server_set_log(const char *filename);
 
+/*
+ * Loading configs
+ */
 uint8_t cloud_server_load_cfg(const char *filename);
+
 /*
  * Starting cloud server
  */

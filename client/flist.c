@@ -49,6 +49,17 @@ struct flist *flist_next(struct flist *list)
     return list->next;
 }
 
+size_t flist_len(struct flist *restrict list)
+{
+    size_t len = 0;
+
+    while (list) {
+        len++;
+        list = list->next;
+    }
+    return len;
+}
+
 void flist_free_all(struct flist *list)
 {
     struct flist *tmp;
